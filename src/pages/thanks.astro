@@ -1,0 +1,23 @@
+---
+import { getEntry } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const page = await getEntry('pages', 'thanks');
+if (!page) throw new Error('Missing content: src/content/pages/thanks.md');
+const { data } = page;
+---
+
+<BaseLayout title={data.title} description={data.description} noindex>
+  <section class="section">
+    <div class="container narrow">
+      <h1>{data.heading}</h1>
+      {data.intro && <p class="lead">{data.intro}</p>}
+      <a class="btn btn--primary" href="/">{data.sections?.homeLink ?? 'Back to the home page'}</a>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .narrow { max-width: 40rem; }
+  .lead { margin-bottom: var(--space-6); }
+</style>

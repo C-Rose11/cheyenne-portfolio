@@ -1,0 +1,138 @@
+---
+import { Image } from 'astro:assets';
+import { getEntry } from 'astro:content';
+import { site } from '../config/site';
+
+const home = await getEntry('pages', 'home');
+const buttonLabel = home?.data.sections?.headerButton ?? 'Join us';
+---
+
+<header class="site-header">
+  <div class="container site-header__bar">
+    <a class="brand" href="/">
+      <Image src={site.logo.src} width={site.logo.width} height={site.logo.height} alt={`${site.name} – home`} loading="eager" />
+    </a>
+
+    <a class="btn btn--primary join-btn" href="/#join">{buttonLabel}</a>
+
+    <!-- Hidden until the script below confirms JS is available; without JS the nav simply stays open. -->
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
+      <span class="menu-toggle__open">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M3 6h18M3 12h18M3 18h18" /></svg>
+      </span>
+      <span class="menu-toggle__close">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6 6 18" /></svg>
+      </span>
+      <span class="visually-hidden">Menu</span>
+    </button>
+
+    <nav id="site-nav" class="site-nav" aria-label="Main">
+      <ul>
+        {site.nav.map((item) => <li><a href={item.href}>{item.label}</a></li>)}
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<script is:inline>
+  // The only JavaScript on the site: the mobile menu toggle.
+  (function () {
+    var root = document.documentElement;
+    var header = document.querySelector('.site-header');
+    var btn = header && header.querySelector('.menu-toggle');
+    var nav = document.getElementById('site-nav');
+    if (!btn || !nav) return;
+    root.classList.add('js');
+
+    function setOpen(open) {
+      btn.setAttribute('aria-expanded', String(open));
+      header.toggleAttribute('data-open', open);
+    }
+    btn.addEventListener('click', function () {
+      setOpen(btn.getAttribute('aria-expanded') !== 'true');
+    });
+    header.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && btn.getAttribute('aria-expanded') === 'true') {
+        setOpen(false);
+        btn.focus();
+      }
+    });
+    nav.addEventListener('click', function (e) {
+      if (e.target.closest('a')) setOpen(false);
+    });
+    var join = header.querySelector('.join-btn');
+    if (join) join.addEventListener('click', function () { setOpen(false); });
+  })();
+</script>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: var(--color-background);
+    border-bottom: 1px solid var(--color-border);
+  }
+  .site-header__bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+    min-height: var(--header-h);
+    padding-block: var(--space-3);
+  }
+  .brand { margin-right: auto; display: block; line-height: 0; }
+  .brand :global(img) { height: 2.5rem; width: auto; }
+  .join-btn { padding-inline: 1.1rem; white-space: nowrap; }
+
+  .menu-toggle {
+    display: none;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0;
+    border: 2px solid var(--color-primary);
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--color-primary);
+    cursor: pointer;
+  }
+  .menu-toggle__close { display: none; }
+  .menu-toggle[aria-expanded='true'] .menu-toggle__open { display: none; }
+  .menu-toggle[aria-expanded='true'] .menu-toggle__close { display: block; }
+
+  .site-nav { flex-basis: 100%; }
+  .site-nav ul {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .site-nav a {
+    display: block;
+    padding: 0.7rem 0.25rem;
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-ink);
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .site-nav a:hover { color: var(--color-accent-dark); }
+
+  /* Collapsed state only applies when JS is running */
+  @media (max-width: 55.99rem) {
+    :global(html.js) .menu-toggle { display: grid; }
+    :global(html.js) .site-header:not([data-open]) .site-nav { display: none; }
+    /* A long menu scrolls inside the sticky header instead of running off-screen. */
+    .site-nav { max-height: calc(100vh - var(--header-h) - 1rem); overflow-y: auto; }
+  }
+
+  @media (min-width: 56rem) {
+    .site-header__bar { flex-wrap: nowrap; gap: var(--space-6); }
+    .brand { margin-right: 0; }
+    .site-nav { flex-basis: auto; margin-left: auto; order: 2; }
+    .join-btn { order: 3; }
+    .site-nav ul { flex-direction: row; gap: var(--space-1); }
+    .site-nav a { border: 0; padding: 0.5rem 0.75rem; border-radius: var(--radius-sm); white-space: nowrap; }
+  }
+</style>

@@ -1,0 +1,29 @@
+---
+import { site, absoluteUrl } from '../config/site';
+
+const schema: Record<string, unknown> = {
+  '@context': 'https://schema.org',
+  '@type': site.schemaType,
+  '@id': `${absoluteUrl('/')}#organization`,
+  name: site.name,
+  description: site.description,
+  url: absoluteUrl('/'),
+  email: site.email,
+  image: absoluteUrl(site.shareImage),
+  logo: absoluteUrl(site.logo.src),
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: site.meeting.street,
+    addressLocality: site.meeting.city,
+    addressRegion: site.meeting.region,
+    postalCode: site.meeting.postalCode,
+    addressCountry: site.meeting.country,
+  },
+  areaServed: site.area.map((name) => ({ '@type': 'City', name })),
+};
+
+if (site.phone) schema.telephone = site.phone.tel;
+if (site.social.length) schema.sameAs = site.social.map((s) => s.url);
+---
+
+<script type="application/ld+json" set:html={JSON.stringify(schema)} />

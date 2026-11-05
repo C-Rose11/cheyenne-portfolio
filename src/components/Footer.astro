@@ -1,0 +1,104 @@
+---
+import { Image } from 'astro:assets';
+import { site } from '../config/site';
+
+const year = new Date().getFullYear();
+const { meeting } = site;
+---
+
+<footer class="site-footer">
+  <div class="container footer-grid">
+    <div class="footer-col footer-brand">
+      <a href="/" class="footer-logo">
+        <Image src={site.logo.src} width={site.logo.width} height={site.logo.height} alt={`${site.name} – home`} />
+      </a>
+      <p>{site.tagline}</p>
+    </div>
+
+    <div class="footer-col">
+      <h2>Contact</h2>
+      <ul>
+        <li><a href={`mailto:${site.email}`}>{site.email}</a></li>
+        {site.phone && <li><a href={`tel:${site.phone.tel}`}>{site.phone.display}</a></li>}
+      </ul>
+    </div>
+
+    <div class="footer-col">
+      <h2>Where we meet</h2>
+      <address>
+        {meeting.name}
+        <br />
+        {meeting.street}
+        <br />
+        {meeting.city}, {meeting.region} {meeting.postalCode}
+      </address>
+      <p><a href={meeting.mapUrl} rel="noopener noreferrer" target="_blank">Open in maps<span class="visually-hidden"> (opens in a new tab)</span></a></p>
+    </div>
+
+    <div class="footer-col">
+      <h2>Explore</h2>
+      <ul>
+        {site.nav.map((item) => <li><a href={item.href}>{item.label}</a></li>)}
+      </ul>
+      {
+        site.social.length > 0 && (
+          <ul class="social" aria-label="Social media">
+            {site.social.map((s) => (
+              <li>
+                <a href={s.url} rel="noopener noreferrer" target="_blank">
+                  {s.platform}
+                  <span class="visually-hidden"> (opens in a new tab)</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+    </div>
+  </div>
+
+  <div class="container footer-legal">
+    <p>&copy; {year} {site.name}. All rights reserved.</p>
+    <p><a href="#main">Back to top</a></p>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    background: var(--color-primary-dark);
+    color: #e6edf5;
+    padding-top: var(--space-12);
+    font-size: var(--text-sm);
+  }
+  .site-footer a { color: #fff; }
+  .site-footer a:hover { color: #ffd9c7; }
+  .footer-grid {
+    display: grid;
+    gap: var(--space-8);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  }
+  h2 { margin-bottom: var(--space-3); font-size: var(--text-base); color: #fff; }
+  ul { list-style: none; margin: 0 0 var(--space-4); padding: 0; }
+  li { margin-bottom: var(--space-2); }
+  address { font-style: normal; margin-bottom: var(--space-2); }
+  .footer-logo {
+    display: inline-block;
+    margin-bottom: var(--space-3);
+    padding: var(--space-2) var(--space-3);
+    background: #fff;
+    border-radius: var(--radius-sm);
+    line-height: 0;
+  }
+  .footer-logo :global(img) { height: 2.25rem; width: auto; }
+  .social { display: flex; flex-wrap: wrap; gap: var(--space-4); }
+  .footer-legal {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-top: var(--space-8);
+    padding-block: var(--space-6);
+    border-top: 1px solid rgb(255 255 255 / 0.18);
+  }
+  .footer-legal p { margin: 0; }
+</style>

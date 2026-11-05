@@ -1,0 +1,48 @@
+---
+import '../styles/global.css';
+import fontUrl from '../assets/fonts/inter-latin-variable.woff2?url';
+import { site } from '../config/site';
+import SEO from '../components/SEO.astro';
+import OrgSchema from '../components/OrgSchema.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+  image?: string;
+  noindex?: boolean;
+  isHome?: boolean;
+}
+
+const props = Astro.props;
+
+// Brand colors from the site config become CSS custom properties.
+const kebab = (s: string) => s.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`);
+const colorTokens = Object.entries(site.colors)
+  .map(([key, value]) => `--color-${kebab(key)}:${value};`)
+  .join('');
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content={site.colors.primary} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preload" href={fontUrl} as="font" type="font/woff2" crossorigin />
+    <style is:inline set:html={`:root{${colorTokens}}`}></style>
+    <SEO {...props} />
+    <OrgSchema />
+    <slot name="head" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to main content</a>
+    <Header />
+    <main id="main" tabindex="-1">
+      <slot />
+    </main>
+    <Footer />
+  </body>
+</html>

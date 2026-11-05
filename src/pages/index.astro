@@ -1,0 +1,532 @@
+---
+import { getCollection, getEntry, render } from 'astro:content';
+import { Image } from 'astro:assets';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import JoinForm from '../components/JoinForm.astro';
+import Icon from '../components/Icon.astro';
+import { site, absoluteUrl } from '../config/site';
+
+const page = await getEntry('pages', 'home');
+if (!page) throw new Error('Missing content: src/content/pages/home.md');
+const { data } = page;
+const s = data.sections ?? {};
+const { Content: AboutText } = await render(page);
+const { meeting, features } = site;
+
+const byOrder = <T extends { data: { order: number } }>(a: T, b: T) => a.data.order - b.data.order;
+const schedule = (await getCollection('schedule')).sort(byOrder);
+const testimonials = (await getCollection('testimonials')).sort(byOrder);
+const faqs = (await getCollection('faqs')).sort(byOrder);
+const gallery = features.gallery ? (await getCollection('gallery')).sort(byOrder) : [];
+const sponsors = features.sponsors ? (await getCollection('sponsors')).sort(byOrder) : [];
+
+// Events dated before today are left out. Rebuild (push a change) to refresh after a date passes.
+const today = new Date();
+today.setUTCHours(0, 0, 0, 0);
+const events = features.events
+  ? (await getCollection('events'))
+      .filter((e) => e.data.date.valueOf() >= today.valueOf())
+      .sort((a, b) => a.data.date.valueOf() - b.data.date.valueOf())
+  : [];
+
+const month = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' });
+const day = (d: Date) => d.toLocaleDateString('en-US', { day: 'numeric', timeZone: 'UTC' });
+const longDate = (d: Date) =>
+  d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+const isoDay = (d: Date) => d.toISOString().slice(0, 10);
+
+const meetingAddress = {
+  '@type': 'PostalAddress',
+  streetAddress: meeting.street,
+  addressLocality: meeting.city,
+  addressRegion: meeting.region,
+  postalCode: meeting.postalCode,
+  addressCountry: meeting.country,
+};
+
+// Structured data: Event entries for the upcoming events, FAQPage for the questions.
+const eventSchema = events.map((e) => ({
+  '@context': 'https://schema.org',
+  '@type': 'Event',
+  name: e.data.title,
+  startDate: isoDay(e.data.date),
+  eventStatus: 'https://schema.org/EventScheduled',
+  eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+  location: { '@type': 'Place', name: e.data.location ?? meeting.name, address: meetingAddress },
+  image: absoluteUrl(site.shareImage),
+  organizer: { '@type': 'Organization', name: site.name, url: absoluteUrl('/') },
+  ...(e.data.description && { description: e.data.description }),
+  ...(e.data.link && { url: e.data.link }),
+}));
+
+const plain = (md = '') =>
+  md
+    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/[*_`>#]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqs.map((faq) => ({
+    '@type': 'Question',
+    name: faq.data.question,
+    acceptedAnswer: { '@type': 'Answer', text: plain(faq.body) },
+  })),
+};
+
+const faqRendered = await Promise.all(faqs.map(async (faq) => ({ faq, Content: (await render(faq)).Content })));
+---
+
+<BaseLayout title={data.title} description={data.description} isHome>
+  <Fragment slot="head">
+    {events.length > 0 && <script type="application/ld+json" set:html={JSON.stringify(eventSchema)} />}
+    {faqs.length > 0 && <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />}
+  </Fragment>
+
+  <!-- Hero -->
+  <section class="hero" class:list={{ 'hero--image': data.heroImage }} style={data.heroImage ? `--hero-wash:${data.heroOverlay}` : undefined}>
+    {
+      data.heroImage && (
+        <Image
+          src={data.heroImage}
+          alt={data.heroImageAlt}
+          widths={[640, 1024, 1600, 2000]}
+          sizes="100vw"
+          loading="eager"
+          fetchpriority="high"
+          class="hero__bg"
+        />
+      )
+    }
+    <div class="container hero__inner">
+      <p class="eyebrow">{site.name}</p>
+      <h1>{data.heading}</h1>
+      {data.intro && <p class="lead hero__sub">{data.intro}</p>}
+      <div class="btn-row">
+        <a class="btn btn--primary" href="#join">{s.heroPrimary ?? 'Join the club'}</a>
+        <a class="btn btn--secondary" href="#schedule">{s.heroSecondary ?? 'See the schedule'}</a>
+      </div>
+      <p class="hero__area">
+        <Icon name="pin" size={18} />
+        <span>Meets at {meeting.name}, {meeting.city}</span>
+      </p>
+    </div>
+  </section>
+
+  <!-- About -->
+  <section class="section" id="about" aria-labelledby="about-heading">
+    <div class="container about">
+      <div class="about__text">
+        <h2 id="about-heading">{s.aboutHeading}</h2>
+        <div class="prose"><AboutText /></div>
+      </div>
+      {
+        data.image && (
+          <Image src={data.image} alt={data.imageAlt ?? ''} widths={[480, 800]} sizes="(min-width: 56rem) 40vw, 100vw" class="about__img" />
+        )
+      }
+    </div>
+  </section>
+
+  <!-- Benefits -->
+  {
+    data.benefits && (
+      <section class="section section--tint" aria-labelledby="benefits-heading">
+        <div class="container">
+          <div class="section__head"><h2 id="benefits-heading">{s.benefitsHeading}</h2></div>
+          <ul class="grid cards">
+            {data.benefits.map((b) => (
+              <li class="card">
+                <div class="card__icon"><Icon name={b.icon} /></div>
+                <h3>{b.title}</h3>
+                <p>{b.text}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+    )
+  }
+
+  <!-- Schedule -->
+  <section class="section" id="schedule" aria-labelledby="schedule-heading">
+    <div class="container">
+      <div class="section__head">
+        <h2 id="schedule-heading">{s.scheduleHeading}</h2>
+        {s.scheduleIntro && <p class="lead">{s.scheduleIntro}</p>}
+      </div>
+      <ul class="grid cards">
+        {
+          schedule.map((run) => (
+            <li class="card run">
+              <p class="run__when">
+                <Icon name="calendar" size={18} />
+                <span>{run.data.day}s &middot; {run.data.time}</span>
+              </p>
+              <h3>{run.data.title}</h3>
+              <p class="run__meta">
+                <Icon name="pin" size={16} />
+                <span>{run.data.location ?? meeting.name}</span>
+              </p>
+              {run.data.pace && <p class="run__meta"><Icon name="clock" size={16} /><span>{run.data.pace}</span></p>}
+              {run.data.description && <p>{run.data.description}</p>}
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <!-- Events -->
+  {
+    features.events && (
+      <section class="section section--tint" id="events" aria-labelledby="events-heading">
+        <div class="container">
+          <div class="section__head">
+            <h2 id="events-heading">{s.eventsHeading}</h2>
+            {s.eventsIntro && <p class="lead">{s.eventsIntro}</p>}
+          </div>
+          {events.length === 0 ? (
+            <p>{s.eventsEmpty ?? 'No events are scheduled right now.'}</p>
+          ) : (
+            <ul class="events">
+              {events.map((e) => (
+                <li class="card event">
+                  <div class="event__date" aria-hidden="true">
+                    <span class="event__month">{month(e.data.date)}</span>
+                    <span class="event__day">{day(e.data.date)}</span>
+                  </div>
+                  <div class="event__body">
+                    <h3>{e.data.title}</h3>
+                    <p class="event__meta">
+                      <time datetime={isoDay(e.data.date)}>{longDate(e.data.date)}</time>
+                      {e.data.time && <span> &middot; {e.data.time}</span>}
+                      {e.data.location && <span> &middot; {e.data.location}</span>}
+                    </p>
+                    {e.data.description && <p>{e.data.description}</p>}
+                    {e.data.link && (
+                      <p><a href={e.data.link} rel="noopener noreferrer" target="_blank">{s.eventsLink ?? 'Event details'}<span class="visually-hidden"> for {e.data.title} (opens in a new tab)</span></a></p>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </section>
+    )
+  }
+
+  <!-- Gallery -->
+  {
+    features.gallery && gallery.length > 0 && (
+      <section class="section" id="gallery" aria-labelledby="gallery-heading">
+        <div class="container">
+          <div class="section__head">
+            <h2 id="gallery-heading">{s.galleryHeading}</h2>
+            {s.galleryIntro && <p class="lead">{s.galleryIntro}</p>}
+          </div>
+          <ul class="gallery">
+            {gallery.map((g) => (
+              <li>
+                <Image src={g.data.image} alt={g.data.alt} widths={[400, 640, 960]} sizes="(min-width: 56rem) 33vw, (min-width: 32rem) 50vw, 100vw" class="gallery__img" />
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+    )
+  }
+
+  <!-- Member stories -->
+  {
+    testimonials.length > 0 && (
+      <section class="section section--tint" aria-labelledby="stories-heading">
+        <div class="container">
+          <div class="section__head"><h2 id="stories-heading">{s.storiesHeading}</h2></div>
+          <div class="grid">
+            {testimonials.map((t) => (
+              <figure class="card quote">
+                <blockquote><p>{t.data.quote}</p></blockquote>
+                <figcaption>
+                  <strong>{t.data.firstName}</strong>
+                  {t.data.detail && <span>, {t.data.detail}</span>}
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <!-- FAQ -->
+  <section class="section" id="faq" aria-labelledby="faq-heading">
+    <div class="container faq-wrap">
+      <div class="section__head">
+        <h2 id="faq-heading">{s.faqHeading}</h2>
+        {s.faqIntro && <p class="lead">{s.faqIntro}</p>}
+      </div>
+      {
+        faqRendered.map(({ faq, Content }) => (
+          <details>
+            <summary>{faq.data.question}</summary>
+            <div class="answer prose"><Content /></div>
+          </details>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- Sponsors -->
+  {
+    features.sponsors && sponsors.length > 0 && (
+      <section class="section section--tint sponsors-section" aria-labelledby="sponsors-heading" style="--section: 3rem">
+        <div class="container">
+          <div class="section__head section__head--center">
+            <h2 id="sponsors-heading">{s.sponsorsHeading}</h2>
+            {s.sponsorsIntro && <p class="lead">{s.sponsorsIntro}</p>}
+          </div>
+          <ul class="sponsors">
+            {sponsors.map((sp) => (
+              <li>
+                {sp.data.url ? (
+                  <a href={sp.data.url} rel="noopener noreferrer sponsored" target="_blank">
+                    <Image src={sp.data.logo} alt={sp.data.name} width={200} height={100} class="sponsor__img" />
+                    <span class="visually-hidden"> (opens in a new tab)</span>
+                  </a>
+                ) : (
+                  <Image src={sp.data.logo} alt={sp.data.name} width={200} height={100} class="sponsor__img" />
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+    )
+  }
+
+  <!-- Join -->
+  <section class="section join" id="join" aria-labelledby="join-heading">
+    <div class="container join__inner">
+      <div class="join__form">
+        <h2 id="join-heading">{s.joinHeading}</h2>
+        {s.joinIntro && <p class="lead">{s.joinIntro}</p>}
+        <JoinForm experience={data.joinExperience} buttonLabel={s.joinButton} />
+      </div>
+
+      <aside class="join__details" aria-label="Meeting details and other ways to connect">
+        <h3>{s.meetingHeading}</h3>
+        <address>
+          {meeting.name}
+          <br />
+          {meeting.street}, {meeting.city}, {meeting.region} {meeting.postalCode}
+        </address>
+        {meeting.notes && <p>{meeting.notes}</p>}
+        <p><a href={meeting.mapUrl} rel="noopener noreferrer" target="_blank">Open in maps<span class="visually-hidden"> (opens in a new tab)</span></a></p>
+
+        <ul class="contact-list">
+          <li><Icon name="mail" size={20} /><a href={`mailto:${site.email}`}>{site.email}</a></li>
+          {site.phone && <li><Icon name="phone" size={20} /><a href={`tel:${site.phone.tel}`}>{site.phone.display}</a></li>}
+        </ul>
+
+        {
+          site.joinLinks.length > 0 && (
+            <>
+              <h3>{s.otherWaysHeading}</h3>
+              <ul class="plain">
+                {site.joinLinks.map((l) => (
+                  <li>
+                    <a href={l.url} rel="noopener noreferrer" target="_blank">{l.label}<span class="visually-hidden"> (opens in a new tab)</span></a>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )
+        }
+      </aside>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  /* Hero */
+  .hero {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    padding-block: clamp(3.5rem, 2rem + 8vw, 7rem);
+    background: linear-gradient(180deg, var(--color-surface), var(--color-background));
+  }
+  .hero :global(.hero__bg) {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  /* White wash keeps text readable over the image. Strength comes from `heroOverlay` in home.md (--hero-wash, 0-1). */
+  .hero--image::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: rgb(255 255 255 / var(--hero-wash));
+  }
+  @media (min-width: 56rem) {
+    .hero--image::before {
+      background: linear-gradient(
+        90deg,
+        rgb(255 255 255 / calc(var(--hero-wash) + 0.12)) 0%,
+        rgb(255 255 255 / var(--hero-wash)) 50%,
+        rgb(255 255 255 / calc(var(--hero-wash) - 0.48)) 100%
+      );
+    }
+  }
+  .hero__inner > * { max-width: 44rem; }
+  .hero__sub { margin-bottom: var(--space-6); }
+  .hero__area {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin: var(--space-6) 0 0;
+    color: var(--color-muted);
+    font-weight: 600;
+  }
+
+  /* About */
+  .about { display: grid; gap: var(--space-8); align-items: center; }
+  .about :global(.about__img) { width: 100%; border-radius: var(--radius); box-shadow: var(--shadow); }
+  @media (min-width: 56rem) {
+    .about { grid-template-columns: 1.1fr 1fr; gap: var(--space-12); }
+  }
+
+  .cards { list-style: none; margin: 0; padding: 0; }
+
+  /* Schedule */
+  .run__when {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin: 0 0 var(--space-2);
+    color: var(--color-accent-dark);
+    font-weight: 700;
+  }
+  .run__meta { display: flex; align-items: center; gap: var(--space-2); margin: 0 0 var(--space-2); color: var(--color-muted); font-size: var(--text-sm); font-weight: 600; }
+  .run :global(svg) { flex: none; }
+
+  /* Events */
+  .events { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-4); max-width: 52rem; }
+  .event { display: flex; gap: var(--space-6); align-items: flex-start; }
+  .event__date {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 4.25rem;
+    padding: var(--space-2) 0;
+    border-radius: var(--radius-sm);
+    background: var(--color-primary);
+    color: #fff;
+    line-height: 1.1;
+    text-align: center;
+  }
+  .event__month { font-size: var(--text-sm); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+  .event__day { font-size: 1.6rem; font-weight: 800; }
+  .event__body h3 { margin-bottom: var(--space-1); }
+  .event__meta { color: var(--color-muted); font-size: var(--text-sm); font-weight: 600; }
+
+  /* Gallery */
+  .gallery {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--space-3);
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 32rem) {
+    .gallery { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (min-width: 56rem) {
+    .gallery { grid-template-columns: repeat(3, 1fr); }
+  }
+  .gallery :global(.gallery__img) {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 3 / 2;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow);
+  }
+
+  /* Member stories */
+  .quote { margin: 0; }
+  .quote blockquote { margin: 0 0 var(--space-4); font-size: var(--text-lg); }
+  .quote blockquote p::before { content: '\201C'; }
+  .quote blockquote p::after { content: '\201D'; }
+  .quote figcaption { color: var(--color-muted); font-size: var(--text-sm); }
+
+  /* FAQ */
+  .faq-wrap { max-width: 48rem; }
+  details {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-background);
+  }
+  details + details { margin-top: var(--space-3); }
+  summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-4) var(--space-6);
+    font-weight: 650;
+    color: var(--color-primary);
+    cursor: pointer;
+    list-style: none;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: '+'; flex: none; font-size: 1.5rem; line-height: 1; color: var(--color-accent); }
+  details[open] summary::after { content: '\2212'; }
+  summary:focus-visible { outline-offset: -3px; }
+  .answer { padding: 0 var(--space-6) var(--space-4); }
+
+  /* Sponsors */
+  .sponsors-section .section__head { margin-bottom: var(--space-6); }
+  .sponsors {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: var(--space-4);
+  }
+  .sponsors a { display: block; border-radius: var(--radius-sm); }
+  .sponsors :global(.sponsor__img) { width: 9rem; height: auto; border-radius: var(--radius-sm); }
+
+  /* Join */
+  .join__inner { display: grid; gap: var(--space-12); }
+  .join__details {
+    align-self: start;
+    padding: var(--space-6);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+  }
+  .join__details h3 { margin-top: var(--space-6); }
+  .join__details h3:first-child { margin-top: 0; }
+  .join__details address { font-style: normal; margin-bottom: var(--space-2); }
+  .contact-list, .plain { list-style: none; margin: 0 0 var(--space-4); padding: 0; }
+  .contact-list li { display: flex; gap: var(--space-3); align-items: center; margin-bottom: var(--space-2); }
+  .contact-list :global(svg) { flex: none; color: var(--color-accent); }
+  .plain li { margin-bottom: var(--space-2); }
+  .join__form .lead { margin-bottom: var(--space-6); }
+  @media (min-width: 56rem) {
+    .join__inner { grid-template-columns: 1.4fr 1fr; }
+  }
+</style>

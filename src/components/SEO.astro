@@ -1,0 +1,35 @@
+---
+import { site, absoluteUrl } from '../config/site';
+
+interface Props {
+  title: string;
+  description?: string;
+  image?: string;
+  noindex?: boolean;
+  /** Home page uses the title as-is; other pages get " | Business Name" appended. */
+  isHome?: boolean;
+}
+
+const { title, description = site.description, image = site.shareImage, noindex = false, isHome = false } = Astro.props;
+
+const fullTitle = isHome ? title : `${title} | ${site.name}`;
+const canonical = absoluteUrl(Astro.url.pathname);
+const imageUrl = absoluteUrl(image);
+---
+
+<title>{fullTitle}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonical} />
+{noindex && <meta name="robots" content="noindex, follow" />}
+
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content={site.name} />
+<meta property="og:title" content={fullTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonical} />
+<meta property="og:image" content={imageUrl} />
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={fullTitle} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={imageUrl} />

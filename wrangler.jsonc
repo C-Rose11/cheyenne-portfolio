@@ -1,0 +1,10 @@
+{
+  // Cloudflare Workers config: serve the built static site from ./dist. No adapter or bindings needed.
+  // Set "name" to this site's Cloudflare project name (Workers & Pages) so the names match.
+  "name": "cheyenne-portfolio",
+  "compatibility_date": "2026-10-28",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "404-page"
+  }
+}
