@@ -93,18 +93,18 @@ export const site = {
   /**
    * Brand colors feed the CSS tokens in global.css (injected by BaseLayout).
    * Keep text-on-color pairs at WCAG AA contrast (4.5:1):
-   *  - `primary` and `accent` must both work behind white text
+   *  - `primary` and `accentDark` must work behind white text; `accent` takes ink text
    *  - `ink` and `muted` must work on white and on `surface`
    */
   colors: {
     primary: '#0e4d64',
     primaryDark: '#0a3547',
-    accent: '#c2410c',
-    accentDark: '#9a3412',
+    accent: '#f5b21b', // marigold: button backgrounds (dark text)
+    accentDark: '#8a5300', // deep marigold: accent text, icons, focus ring, button hover
     ink: '#16212b',
     muted: '#475467',
-    surface: '#f2f7f8',
-    border: '#d3dde1',
+    surface: '#fbe3ea', // soft pink: tinted sections and hero
+    border: '#efd5dc', // soft pink, decorative borders only
     background: '#ffffff',
   },
 };
