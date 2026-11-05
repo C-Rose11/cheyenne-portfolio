@@ -65,19 +65,20 @@ const { meeting } = site;
 
 <style>
   .site-footer {
+    --focus: 3px solid var(--color-surface);
     background: var(--color-primary-dark);
-    color: #e6edf5;
+    color: var(--color-surface);
     padding-top: var(--space-12);
     font-size: var(--text-sm);
   }
-  .site-footer a { color: #fff; }
-  .site-footer a:hover { color: #ffd9c7; }
+  .site-footer a { color: var(--color-surface); }
+  .site-footer a:hover { text-decoration-thickness: 2px; }
   .footer-grid {
     display: grid;
     gap: var(--space-8);
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
   }
-  h2 { margin-bottom: var(--space-3); font-size: var(--text-base); color: #fff; }
+  h2 { margin-bottom: var(--space-3); font-size: var(--text-base); color: var(--color-surface); }
   ul { list-style: none; margin: 0 0 var(--space-4); padding: 0; }
   li { margin-bottom: var(--space-2); }
   address { font-style: normal; margin-bottom: var(--space-2); }
@@ -85,7 +86,7 @@ const { meeting } = site;
     display: inline-block;
     margin-bottom: var(--space-3);
     padding: var(--space-2) var(--space-3);
-    background: #fff;
+    background: var(--color-surface);
     border-radius: var(--radius-sm);
     line-height: 0;
   }
@@ -98,7 +99,7 @@ const { meeting } = site;
     gap: var(--space-3);
     margin-top: var(--space-8);
     padding-block: var(--space-6);
-    border-top: 1px solid rgb(255 255 255 / 0.18);
+    border-top: 1px solid color-mix(in srgb, var(--color-surface) 30%, transparent);
   }
   .footer-legal p { margin: 0; }
 </style>

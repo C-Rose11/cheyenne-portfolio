@@ -7,7 +7,7 @@ const home = await getEntry('pages', 'home');
 const buttonLabel = home?.data.sections?.headerButton ?? 'Join us';
 ---
 
-<header class="site-header">
+<header class="site-header theme-maroon">
   <div class="container site-header__bar">
     <a class="brand" href="/">
       <Image src={site.logo.src} width={site.logo.width} height={site.logo.height} alt={`${site.name} – home`} loading="eager" />
@@ -70,8 +70,11 @@ const buttonLabel = home?.data.sections?.headerButton ?? 'Join us';
     position: sticky;
     top: 0;
     z-index: 50;
-    background: var(--color-background);
-    border-bottom: 1px solid var(--color-border);
+    /* Maroon bar with cream text, icons and focus ring (10.8:1) */
+    --focus: 3px solid var(--color-surface);
+    background: var(--color-primary);
+    color: var(--color-surface);
+    border-bottom: 1px solid var(--color-primary-dark);
   }
   .site-header__bar {
     display: flex;
@@ -81,8 +84,16 @@ const buttonLabel = home?.data.sections?.headerButton ?? 'Join us';
     min-height: var(--header-h);
     padding-block: var(--space-3);
   }
-  .brand { margin-right: auto; display: block; line-height: 0; }
-  .brand :global(img) { height: 2.5rem; width: auto; }
+  /* Pink tile behind the logo so a dark logo stays visible on maroon (matches the footer) */
+  .brand {
+    margin-right: auto;
+    display: block;
+    padding: var(--space-1) var(--space-2);
+    background: var(--color-surface);
+    border-radius: var(--radius-sm);
+    line-height: 0;
+  }
+  .brand :global(img) { height: 2.25rem; width: auto; }
   .join-btn { padding-inline: 1.1rem; white-space: nowrap; }
 
   .menu-toggle {
@@ -91,10 +102,10 @@ const buttonLabel = home?.data.sections?.headerButton ?? 'Join us';
     width: 2.75rem;
     height: 2.75rem;
     padding: 0;
-    border: 2px solid var(--color-primary);
+    border: 2px solid var(--color-surface);
     border-radius: var(--radius-sm);
     background: transparent;
-    color: var(--color-primary);
+    color: var(--color-surface);
     cursor: pointer;
   }
   .menu-toggle__close { display: none; }
@@ -112,12 +123,12 @@ const buttonLabel = home?.data.sections?.headerButton ?? 'Join us';
   .site-nav a {
     display: block;
     padding: 0.7rem 0.25rem;
-    border-bottom: 1px solid var(--color-border);
-    color: var(--color-ink);
+    border-bottom: 1px solid color-mix(in srgb, var(--color-surface) 30%, transparent);
+    color: var(--color-surface);
     font-weight: 600;
     text-decoration: none;
   }
-  .site-nav a:hover { color: var(--color-accent-dark); }
+  .site-nav a:hover { text-decoration: underline; text-underline-offset: 0.25em; }
 
   /* Collapsed state only applies when JS is running */
   @media (max-width: 55.99rem) {

@@ -86,7 +86,7 @@ const faqRendered = await Promise.all(faqs.map(async (faq) => ({ faq, Content: (
   </Fragment>
 
   <!-- Hero -->
-  <section class="hero" class:list={{ 'hero--image': data.heroImage }} style={data.heroImage ? `--hero-wash:${data.heroOverlay}` : undefined}>
+  <section class="hero theme-cream" class:list={{ 'hero--image': data.heroImage }} style={data.heroImage ? `--hero-wash:${data.heroOverlay}` : undefined}>
     {
       data.heroImage && (
         <Image
@@ -116,7 +116,7 @@ const faqRendered = await Promise.all(faqs.map(async (faq) => ({ faq, Content: (
   </section>
 
   <!-- About -->
-  <section class="section" id="about" aria-labelledby="about-heading">
+  <section class="section theme-green" id="about" aria-labelledby="about-heading">
     <div class="container about">
       <div class="about__text">
         <h2 id="about-heading">{s.aboutHeading}</h2>
@@ -133,7 +133,7 @@ const faqRendered = await Promise.all(faqs.map(async (faq) => ({ faq, Content: (
   <!-- Benefits -->
   {
     data.benefits && (
-      <section class="section section--tint" aria-labelledby="benefits-heading">
+      <section class="section theme-cream" aria-labelledby="benefits-heading">
         <div class="container">
           <div class="section__head"><h2 id="benefits-heading">{s.benefitsHeading}</h2></div>
           <ul class="grid cards">
@@ -151,7 +151,7 @@ const faqRendered = await Promise.all(faqs.map(async (faq) => ({ faq, Content: (
   }
 
   <!-- Schedule -->
-  <section class="section" id="schedule" aria-labelledby="schedule-heading">
+  <section class="section theme-maroon" id="schedule" aria-labelledby="schedule-heading">
     <div class="container">
       <div class="section__head">
         <h2 id="schedule-heading">{s.scheduleHeading}</h2>
@@ -182,7 +182,7 @@ const faqRendered = await Promise.all(faqs.map(async (faq) => ({ faq, Content: (
   <!-- Events -->
   {
     features.events && (
-      <section class="section section--tint" id="events" aria-labelledby="events-heading">
+      <section class="section theme-cream" id="events" aria-labelledby="events-heading">
         <div class="container">
           <div class="section__head">
             <h2 id="events-heading">{s.eventsHeading}</h2>
@@ -222,7 +222,7 @@ const faqRendered = await Promise.all(faqs.map(async (faq) => ({ faq, Content: (
   <!-- Gallery -->
   {
     features.gallery && gallery.length > 0 && (
-      <section class="section" id="gallery" aria-labelledby="gallery-heading">
+      <section class="section theme-green" id="gallery" aria-labelledby="gallery-heading">
         <div class="container">
           <div class="section__head">
             <h2 id="gallery-heading">{s.galleryHeading}</h2>
@@ -243,7 +243,7 @@ const faqRendered = await Promise.all(faqs.map(async (faq) => ({ faq, Content: (
   <!-- Member stories -->
   {
     testimonials.length > 0 && (
-      <section class="section section--tint" aria-labelledby="stories-heading">
+      <section class="section theme-cream" aria-labelledby="stories-heading">
         <div class="container">
           <div class="section__head"><h2 id="stories-heading">{s.storiesHeading}</h2></div>
           <div class="grid">
@@ -263,7 +263,7 @@ const faqRendered = await Promise.all(faqs.map(async (faq) => ({ faq, Content: (
   }
 
   <!-- FAQ -->
-  <section class="section" id="faq" aria-labelledby="faq-heading">
+  <section class="section theme-cream" id="faq" aria-labelledby="faq-heading">
     <div class="container faq-wrap">
       <div class="section__head">
         <h2 id="faq-heading">{s.faqHeading}</h2>
@@ -283,7 +283,7 @@ const faqRendered = await Promise.all(faqs.map(async (faq) => ({ faq, Content: (
   <!-- Sponsors -->
   {
     features.sponsors && sponsors.length > 0 && (
-      <section class="section section--tint sponsors-section" aria-labelledby="sponsors-heading" style="--section: 3rem">
+      <section class="section theme-maroon sponsors-section" aria-labelledby="sponsors-heading" style="--section: 3rem">
         <div class="container">
           <div class="section__head section__head--center">
             <h2 id="sponsors-heading">{s.sponsorsHeading}</h2>
@@ -309,7 +309,7 @@ const faqRendered = await Promise.all(faqs.map(async (faq) => ({ faq, Content: (
   }
 
   <!-- Join -->
-  <section class="section join" id="join" aria-labelledby="join-heading">
+  <section class="section join theme-cream" id="join" aria-labelledby="join-heading">
     <div class="container join__inner">
       <div class="join__form">
         <h2 id="join-heading">{s.joinHeading}</h2>
@@ -317,7 +317,7 @@ const faqRendered = await Promise.all(faqs.map(async (faq) => ({ faq, Content: (
         <JoinForm experience={data.joinExperience} buttonLabel={s.joinButton} />
       </div>
 
-      <aside class="join__details" aria-label="Meeting details and other ways to connect">
+      <aside class="join__details theme-green" aria-label="Meeting details and other ways to connect">
         <h3>{s.meetingHeading}</h3>
         <address>
           {meeting.name}
@@ -358,7 +358,7 @@ const faqRendered = await Promise.all(faqs.map(async (faq) => ({ faq, Content: (
     isolation: isolate;
     overflow: hidden;
     padding-block: clamp(3.5rem, 2rem + 8vw, 7rem);
-    background: linear-gradient(180deg, var(--color-surface), var(--color-background));
+    background: var(--sec-bg);
   }
   .hero :global(.hero__bg) {
     position: absolute;
@@ -368,21 +368,21 @@ const faqRendered = await Promise.all(faqs.map(async (faq) => ({ faq, Content: (
     height: 100%;
     object-fit: cover;
   }
-  /* White wash keeps text readable over the image. Strength comes from `heroOverlay` in home.md (--hero-wash, 0-1). */
+  /* Wash in the section color keeps text readable over the image. Strength comes from `heroOverlay` in home.md (--hero-wash, 0-1). */
   .hero--image::before {
     content: '';
     position: absolute;
     inset: 0;
     z-index: -1;
-    background: rgb(255 255 255 / var(--hero-wash));
+    background: color-mix(in srgb, var(--sec-bg) calc(var(--hero-wash) * 100%), transparent);
   }
   @media (min-width: 56rem) {
     .hero--image::before {
       background: linear-gradient(
         90deg,
-        rgb(255 255 255 / calc(var(--hero-wash) + 0.12)) 0%,
-        rgb(255 255 255 / var(--hero-wash)) 50%,
-        rgb(255 255 255 / calc(var(--hero-wash) - 0.48)) 100%
+        color-mix(in srgb, var(--sec-bg) calc((var(--hero-wash) + 0.12) * 100%), transparent) 0%,
+        color-mix(in srgb, var(--sec-bg) calc(var(--hero-wash) * 100%), transparent) 50%,
+        color-mix(in srgb, var(--sec-bg) calc((var(--hero-wash) - 0.48) * 100%), transparent) 100%
       );
     }
   }
@@ -416,7 +416,7 @@ const faqRendered = await Promise.all(faqs.map(async (faq) => ({ faq, Content: (
     font-weight: 700;
   }
   .run__meta { display: flex; align-items: center; gap: var(--space-2); margin: 0 0 var(--space-2); color: var(--color-muted); font-size: var(--text-sm); font-weight: 600; }
-  .run :global(svg) { flex: none; }
+  .run :global(svg), .hero__area :global(svg) { flex: none; color: var(--sec-accent); }
 
   /* Events */
   .events { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-4); max-width: 52rem; }
@@ -429,7 +429,7 @@ const faqRendered = await Promise.all(faqs.map(async (faq) => ({ faq, Content: (
     padding: var(--space-2) 0;
     border-radius: var(--radius-sm);
     background: var(--color-primary);
-    color: #fff;
+    color: var(--color-background);
     line-height: 1.1;
     text-align: center;
   }
@@ -472,7 +472,7 @@ const faqRendered = await Promise.all(faqs.map(async (faq) => ({ faq, Content: (
   /* FAQ */
   .faq-wrap { max-width: 48rem; }
   details {
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--color-primary);
     border-radius: var(--radius-sm);
     background: var(--color-background);
   }
@@ -489,7 +489,7 @@ const faqRendered = await Promise.all(faqs.map(async (faq) => ({ faq, Content: (
     list-style: none;
   }
   summary::-webkit-details-marker { display: none; }
-  summary::after { content: '+'; flex: none; font-size: 1.5rem; line-height: 1; color: var(--color-accent-dark); }
+  summary::after { content: '+'; flex: none; font-size: 1.5rem; line-height: 1; color: var(--sec-accent); }
   details[open] summary::after { content: '\2212'; }
   summary:focus-visible { outline-offset: -3px; }
   .answer { padding: 0 var(--space-6) var(--space-4); }
@@ -511,11 +511,10 @@ const faqRendered = await Promise.all(faqs.map(async (faq) => ({ faq, Content: (
 
   /* Join */
   .join__inner { display: grid; gap: var(--space-12); }
+  /* Green panel (theme-green): cream text, links and icons */
   .join__details {
     align-self: start;
     padding: var(--space-6);
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
     border-radius: var(--radius);
   }
   .join__details h3 { margin-top: var(--space-6); }
@@ -523,7 +522,7 @@ const faqRendered = await Promise.all(faqs.map(async (faq) => ({ faq, Content: (
   .join__details address { font-style: normal; margin-bottom: var(--space-2); }
   .contact-list, .plain { list-style: none; margin: 0 0 var(--space-4); padding: 0; }
   .contact-list li { display: flex; gap: var(--space-3); align-items: center; margin-bottom: var(--space-2); }
-  .contact-list :global(svg) { flex: none; color: var(--color-accent-dark); }
+  .contact-list :global(svg) { flex: none; color: var(--sec-accent); }
   .plain li { margin-bottom: var(--space-2); }
   .join__form .lead { margin-bottom: var(--space-6); }
   @media (min-width: 56rem) {

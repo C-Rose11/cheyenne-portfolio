@@ -109,11 +109,11 @@ a:hover { color: var(--color-accent-dark); }
   z-index: 100;
   padding: var(--space-3) var(--space-4);
   background: var(--color-primary);
-  color: #fff;
+  color: var(--color-background);
   border-radius: var(--radius-sm);
   font-weight: 600;
 }
-.skip-link:focus { top: var(--space-4); }
+.skip-link:focus { top: var(--space-4); outline-color: var(--color-background); } /* cream ring: it sits over the maroon header */
 
 .visually-hidden {
   position: absolute !important;
@@ -133,7 +133,57 @@ a:hover { color: var(--color-accent-dark); }
   margin-inline: auto;
 }
 .section { padding-block: var(--section, var(--space-section)); }
-.section--tint { background: var(--color-surface); }
+/*
+ * Section themes: cream, green and maroon only.
+ * Cream sections: black text, maroon headings, links and buttons.
+ * Green and maroon sections: cream text, headings, links and buttons.
+ * Keep colored sections apart: put at least one cream section between them.
+ */
+.theme-cream {
+  --sec-bg: var(--color-background);
+  --sec-text: var(--color-ink);
+  --sec-heading: var(--color-primary);
+  --sec-accent: var(--color-primary);
+}
+.theme-green {
+  --sec-bg: var(--color-highlight);
+  --sec-text: var(--color-background);
+  --sec-heading: var(--color-background);
+  --sec-accent: var(--color-background);
+}
+.theme-maroon {
+  --sec-bg: var(--color-primary);
+  --sec-text: var(--color-background);
+  --sec-heading: var(--color-background);
+  --sec-accent: var(--color-background);
+}
+:is(.theme-cream, .theme-green, .theme-maroon) {
+  --focus: 3px solid var(--sec-accent);
+  background: var(--sec-bg);
+  color: var(--sec-text);
+}
+:is(.theme-cream, .theme-green, .theme-maroon) :is(h1, h2, h3) { color: var(--sec-heading); }
+:is(.theme-green, .theme-maroon) :is(.lead, .eyebrow) { color: var(--sec-text); }
+:is(.theme-cream, .theme-green, .theme-maroon) a:not(.btn) { color: var(--sec-accent); }
+/* Main buttons: accent background with the section color as text; hover inverts */
+:is(.theme-cream, .theme-green, .theme-maroon) .btn--primary {
+  background: var(--sec-accent);
+  border-color: var(--sec-accent);
+  color: var(--sec-bg);
+}
+:is(.theme-cream, .theme-green, .theme-maroon) .btn--primary:hover {
+  background: var(--sec-bg);
+  color: var(--sec-accent);
+}
+:is(.theme-green, .theme-maroon) .btn--secondary { color: var(--sec-accent); border-color: var(--sec-accent); }
+:is(.theme-green, .theme-maroon) .btn--secondary:hover { background: var(--sec-accent); color: var(--sec-bg); }
+/* Cards: cream with a green stripe and icons, black text and maroon headings, in any section */
+.card {
+  --sec-accent: var(--color-highlight);
+  --focus: 3px solid var(--color-primary);
+  color: var(--color-ink);
+}
+.card :is(h3, a:not(.btn)) { color: var(--color-primary); }
 .section__head { max-width: 42rem; margin-bottom: var(--space-8); }
 .section__head--center { margin-inline: auto; text-align: center; }
 .lead { font-size: var(--text-lg); color: var(--color-muted); }
@@ -156,6 +206,7 @@ a:hover { color: var(--color-accent-dark); }
 .card {
   background: var(--color-background);
   border: 1px solid var(--color-border);
+  border-top: 4px solid var(--color-highlight);
   border-radius: var(--radius);
   padding: var(--space-6);
   box-shadow: var(--shadow);
@@ -169,8 +220,8 @@ a:hover { color: var(--color-accent-dark); }
   height: 3rem;
   margin-bottom: var(--space-4);
   border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--color-primary) 10%, white);
-  color: var(--color-primary);
+  background: var(--color-highlight);
+  color: var(--color-background);
 }
 
 /* Buttons */
@@ -190,14 +241,14 @@ a:hover { color: var(--color-accent-dark); }
   cursor: pointer;
   transition: background-color 0.15s, color 0.15s, border-color 0.15s;
 }
-.btn--primary { background: var(--color-accent); color: var(--color-ink); }
-.btn--primary:hover { background: var(--color-accent-dark); color: #fff; }
+.btn--primary { background: var(--color-accent); color: var(--color-background); }
+.btn--primary:hover { background: var(--color-accent-dark); color: var(--color-background); }
 .btn--secondary { background: transparent; color: var(--color-primary); border-color: var(--color-primary); }
-.btn--secondary:hover { background: var(--color-primary); color: #fff; }
-.btn--light { background: #fff; color: var(--color-primary); }
-.btn--light:hover { background: var(--color-surface); color: var(--color-primary-dark); }
-.btn--outline-light { background: transparent; color: #fff; border-color: #fff; }
-.btn--outline-light:hover { background: #fff; color: var(--color-primary); }
+.btn--secondary:hover { background: var(--color-primary); color: var(--color-background); }
+.btn--light { background: var(--color-background); color: var(--color-primary); }
+.btn--light:hover { background: var(--color-highlight); color: var(--color-background); }
+.btn--outline-light { background: transparent; color: var(--color-background); border-color: var(--color-background); }
+.btn--outline-light:hover { background: var(--color-background); color: var(--color-primary); }
 .btn-row { display: flex; flex-wrap: wrap; gap: var(--space-3); }
 
 /* Prose from markdown bodies */

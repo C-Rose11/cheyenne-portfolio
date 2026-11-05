@@ -97,15 +97,16 @@ export const site = {
    *  - `ink` and `muted` must work on white and on `surface`
    */
   colors: {
-    primary: '#0e4d64',
-    primaryDark: '#0a3547',
-    accent: '#f5b21b', // marigold: button backgrounds (dark text)
-    accentDark: '#8a5300', // deep marigold: accent text, icons, focus ring, button hover
-    ink: '#16212b',
-    muted: '#475467',
-    surface: '#fbe3ea', // soft pink: tinted sections and hero
-    border: '#efd5dc', // soft pink, decorative borders only
-    background: '#ffffff',
+    primary: '#5c202e', // maroon: headings, links, maroon sections, header and footer
+    primaryDark: '#5c202e', // maroon: footer
+    accent: '#5c202e', // maroon: main buttons (cream text, 10.8:1)
+    accentDark: '#6b6b24', // green: button hover, labels, focus ring on cream (4.9:1)
+    highlight: '#6b6b24', // green: green sections, card stripes, icon tiles, icons
+    ink: '#000000', // body text on cream
+    muted: '#5c202e', // secondary text on cream
+    surface: '#f7eee5', // cream: text on maroon and green, logo tiles
+    border: '#5c202e33', // maroon at 20%: hairline borders
+    background: '#f7eee5', // cream: page, cream sections and cards
   },
 };
 
