@@ -155,17 +155,10 @@ const ads = features.ads ? (await getCollection('ads')).sort(byOrder) : [];
   <!-- About -->
   <section class="section theme-green" id="about" aria-labelledby="about-heading">
     <div class="container about" class:list={{ 'about--photo': data.image }}>
-      <!-- Decorative maroon star stickers. Phones: a cluster above the heading (stars--top) and one below the text.
-           Wider screens: the clusters sit in side margins beside the first and last lines (stars--side, stars--bottom). -->
-      <div class="stars stars--top" aria-hidden="true"><svg class="star star--big" viewBox="0 0 100 100"><path d="M50 0C54 36 64 46 100 50C64 54 54 64 50 100C46 64 36 54 0 50C36 46 46 36 50 0Z" /></svg><svg class="star star--sm1" viewBox="0 0 100 100"><path d="M50 0C54 36 64 46 100 50C64 54 54 64 50 100C46 64 36 54 0 50C36 46 46 36 50 0Z" /></svg><svg class="star star--sm2" viewBox="0 0 100 100"><path d="M50 0C54 36 64 46 100 50C64 54 54 64 50 100C46 64 36 54 0 50C36 46 46 36 50 0Z" /></svg></div>
       <div class="about__text">
         <h2 id="about-heading">{s.aboutHeading}</h2>
-        <div class="about__body">
-          <div class="stars stars--side" aria-hidden="true"><svg class="star star--big" viewBox="0 0 100 100"><path d="M50 0C54 36 64 46 100 50C64 54 54 64 50 100C46 64 36 54 0 50C36 46 46 36 50 0Z" /></svg><svg class="star star--sm1" viewBox="0 0 100 100"><path d="M50 0C54 36 64 46 100 50C64 54 54 64 50 100C46 64 36 54 0 50C36 46 46 36 50 0Z" /></svg><svg class="star star--sm2" viewBox="0 0 100 100"><path d="M50 0C54 36 64 46 100 50C64 54 54 64 50 100C46 64 36 54 0 50C36 46 46 36 50 0Z" /></svg></div>
-          <div class="prose"><AboutText /></div>
-        </div>
+        <div class="prose"><AboutText /></div>
       </div>
-      <div class="stars stars--bottom" aria-hidden="true"><svg class="star star--big" viewBox="0 0 100 100"><path d="M50 0C54 36 64 46 100 50C64 54 54 64 50 100C46 64 36 54 0 50C36 46 46 36 50 0Z" /></svg><svg class="star star--sm1" viewBox="0 0 100 100"><path d="M50 0C54 36 64 46 100 50C64 54 54 64 50 100C46 64 36 54 0 50C36 46 46 36 50 0Z" /></svg><svg class="star star--sm2" viewBox="0 0 100 100"><path d="M50 0C54 36 64 46 100 50C64 54 54 64 50 100C46 64 36 54 0 50C36 46 46 36 50 0Z" /></svg></div>
       {
         data.image && (
           <Image src={data.image} alt={data.imageAlt ?? ''} widths={[480, 800]} sizes="(min-width: 56rem) 40vw, 100vw" class="about__img" />
@@ -287,35 +280,6 @@ const ads = features.ads ? (await getCollection('ads')).sort(byOrder) : [];
 
   /* About */
   .about { display: grid; gap: var(--space-8); align-items: center; }
-  /* Star stickers: decorative. Top cluster sits in the corner beside the heading;
-     the bottom cluster is the same group turned 180 degrees, placed below the text. */
-  .about { position: relative; --star-size: clamp(2.25rem, 1.25rem + 3vw, 4.25rem); }
-  .stars {
-    position: relative;
-    width: calc(var(--star-size) * 1.9);
-    height: calc(var(--star-size) * 1.45);
-    pointer-events: none;
-  }
-  .stars--top { position: absolute; top: calc(-1 * var(--star-size) * 0.85); right: 0; }
-  .about__body { position: relative; }
-  .stars--side { display: none; }
-  /* Pulled up against the last paragraph so it hugs the text's bottom-left corner */
-  .stars--bottom { rotate: 180deg; margin-top: calc(-1 * var(--space-8) + var(--space-2)); }
-  /* Wider screens: indent the text to make a left margin, and tuck the bottom cluster
-     into that margin beside the last paragraph's bottom-left corner */
-  @media (min-width: 56rem) {
-    .about:not(.about--photo) .about__text { padding-inline: calc(var(--star-size) * 1.75); }
-    /* Right margin cluster: the first line of the first paragraph sits between its two small stars */
-    .about:not(.about--photo) .stars--top { display: none; }
-    .about:not(.about--photo) .stars--side { display: block; position: absolute; right: calc(var(--star-size) * -1.75); top: calc(0.85rem - var(--star-size) * 0.7); }
-    /* Lowered so the last line of text (it starts with "automatically" on a typical
-       desktop width) sits in the gap between the two small stars */
-    .about:not(.about--photo) .stars--bottom { position: absolute; left: 0; bottom: calc(var(--star-size) * -0.7 + 0.85rem); margin: 0; }
-  }
-  .star { position: absolute; height: auto; fill: var(--color-primary); }
-  .star--big { width: var(--star-size); right: 0; top: calc(var(--star-size) * 0.3); rotate: 12deg; }
-  .star--sm1 { width: calc(var(--star-size) * 0.45); right: calc(var(--star-size) * 1.1); top: 0; rotate: -10deg; }
-  .star--sm2 { width: calc(var(--star-size) * 0.3); right: calc(var(--star-size) * 1); top: calc(var(--star-size) * 0.95); rotate: 15deg; }
   .about :global(.about__img) { width: 100%; border-radius: var(--radius); box-shadow: var(--shadow); }
   @media (min-width: 56rem) {
     .about--photo { grid-template-columns: 1.1fr 1fr; gap: var(--space-12); }
