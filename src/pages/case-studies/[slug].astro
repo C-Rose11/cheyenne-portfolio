@@ -1,0 +1,256 @@
+---
+import { getCollection, getEntry, type CollectionEntry } from 'astro:content';
+import { Image } from 'astro:assets';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Icon from '../../components/Icon.astro';
+
+/** One page per project in src/content/projects/, at /case-studies/<file name>/. */
+export async function getStaticPaths() {
+  const projects = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
+  // Previous and Next wrap around, so every case study links to two others.
+  return projects.map((project, i) => ({
+    params: { slug: project.id },
+    props: {
+      project,
+      prev: projects.length > 1 ? projects[(i - 1 + projects.length) % projects.length] : undefined,
+      next: projects.length > 1 ? projects[(i + 1) % projects.length] : undefined,
+    },
+  }));
+}
+
+interface Props {
+  project: CollectionEntry<'projects'>;
+  prev?: CollectionEntry<'projects'>;
+  next?: CollectionEntry<'projects'>;
+}
+
+const { project, prev, next } = Astro.props;
+const p = project.data;
+
+const page = await getEntry('pages', 'case-studies');
+const s = page?.data.sections ?? {};
+
+const facts = [
+  { label: s.client ?? 'Client', value: p.client },
+  { label: s.role ?? 'My role', value: p.role },
+  { label: s.stack ?? 'Stack', value: p.stack.join(' · ') },
+  { label: s.timeline ?? 'Timeline', value: p.timeline },
+].filter((f) => f.value);
+
+const hasStory = p.problem.length > 0 || p.approach.length > 0;
+const hasScreens = p.desktopScreens.length > 0 || p.mobileScreens.length > 0;
+const hasResults = p.metrics.length > 0 || p.testimonial;
+const description = p.result
+  ? `${p.title} case study: ${p.result}`
+  : `How ${p.title} came together, from the problem to the results.`;
+---
+
+<BaseLayout title={`${p.title} case study`} description={description}>
+  <!-- Hero: title and full-width screenshot -->
+  <section class="section theme-cream cs-hero">
+    <div class="container">
+      <p class="eyebrow"><a href="/case-studies/">{s.eyebrow ?? 'Case study'}</a></p>
+      <h1>{p.title}</h1>
+      {p.result && <p class="lead">{p.result}</p>}
+      <Image src={p.image} alt={p.imageAlt} widths={[640, 960, 1280, 1600]} sizes="(min-width: 72rem) 72rem, 100vw" class="cs-hero__img" loading="eager" />
+    </div>
+  </section>
+
+  <!-- Client, role, stack, timeline -->
+  {
+    facts.length > 0 && (
+      <section class="section theme-maroon cs-facts" aria-labelledby="facts-heading">
+        <div class="container">
+          <h2 id="facts-heading" class="visually-hidden">{s.detailsHeading ?? 'Project details'}</h2>
+          <dl class="facts">
+            {facts.map((f) => (
+              <div>
+                <dt>{f.label}</dt>
+                <dd>{f.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </section>
+    )
+  }
+
+  <!-- The problem and my approach -->
+  {
+    hasStory && (
+      <section class="section theme-cream">
+        <div class="container story">
+          {p.problem.length > 0 && (
+            <div>
+              <h2>{s.problemHeading ?? 'The problem'}</h2>
+              {p.problem.map((para) => <p>{para}</p>)}
+            </div>
+          )}
+          {p.approach.length > 0 && (
+            <div>
+              <h2>{s.approachHeading ?? 'My approach'}</h2>
+              {p.approach.map((para) => <p>{para}</p>)}
+            </div>
+          )}
+        </div>
+      </section>
+    )
+  }
+
+  <!-- Desktop and mobile screens -->
+  {
+    hasScreens && (
+      <section class="section theme-green" aria-labelledby="screens-heading">
+        <div class="container">
+          <h2 id="screens-heading">{s.screensHeading ?? 'Screens'}</h2>
+          <div class="screens">
+            {p.desktopScreens.length > 0 && (
+              <div class="screens__desktop">
+                <h3>{s.desktopHeading ?? 'Desktop'}</h3>
+                <ul class="shots">
+                  {p.desktopScreens.map((shot) => (
+                    <li><Image src={shot.image} alt={shot.alt} widths={[480, 800, 1200]} sizes="(min-width: 56rem) 60vw, 100vw" class="shot" /></li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {p.mobileScreens.length > 0 && (
+              <div class="screens__mobile">
+                <h3>{s.mobileHeading ?? 'Mobile'}</h3>
+                <ul class="shots shots--mobile">
+                  {p.mobileScreens.map((shot) => (
+                    <li><Image src={shot.image} alt={shot.alt} widths={[200, 400]} sizes="(min-width: 56rem) 12vw, 30vw" class="shot" /></li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <!-- Results: metrics and testimonial -->
+  {
+    hasResults && (
+      <section class="section theme-cream" aria-labelledby="results-heading">
+        <div class="container">
+          <h2 id="results-heading">{s.resultsHeading ?? 'Results'}</h2>
+          {p.metrics.length > 0 && (
+            <dl class="metrics">
+              {p.metrics.map((m) => (
+                <div class="card metric">
+                  <dt>{m.label}</dt>
+                  <dd>{m.value}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+          {p.testimonial && (
+            <figure class="card cs-quote">
+              <blockquote><p>{p.testimonial.quote}</p></blockquote>
+              <figcaption>
+                <strong>{p.testimonial.name}</strong>
+                {p.testimonial.detail && <span>, {p.testimonial.detail}</span>}
+              </figcaption>
+            </figure>
+          )}
+        </div>
+      </section>
+    )
+  }
+
+  <!-- Previous / live site / next -->
+  <nav class="section theme-cream cs-nav" aria-label="More case studies">
+    <div class="container cs-nav__inner">
+      {prev ? (
+        <a class="btn btn--secondary" href={`/case-studies/${prev.id}/`}>
+          <span aria-hidden="true">&larr;</span> {s.previous ?? 'Previous'}<span class="visually-hidden">: {prev.data.title}</span>
+        </a>
+      ) : <span />}
+      {p.url ? (
+        <a class="btn btn--primary" href={p.url} rel="noopener noreferrer" target="_blank">
+          {s.liveSite ?? 'Visit live site'}
+          <Icon name="external" size={18} />
+          <span class="visually-hidden"> for {p.title} (opens in a new tab)</span>
+        </a>
+      ) : <span />}
+      {next ? (
+        <a class="btn btn--secondary" href={`/case-studies/${next.id}/`}>
+          {s.next ?? 'Next'}<span class="visually-hidden">: {next.data.title}</span> <span aria-hidden="true">&rarr;</span>
+        </a>
+      ) : <span />}
+    </div>
+  </nav>
+</BaseLayout>
+
+<style>
+  .cs-hero { padding-bottom: var(--space-12); }
+  .cs-hero h1 { margin-bottom: var(--space-3); }
+  .cs-hero .lead { max-width: 44rem; margin-bottom: var(--space-8); }
+  .eyebrow a { color: inherit; text-decoration: none; }
+  .eyebrow a:hover { text-decoration: underline; }
+  .cs-hero :global(.cs-hero__img) {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+
+  .cs-facts { --section: var(--space-12); }
+  .facts {
+    display: grid;
+    gap: var(--space-6);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+    margin: 0;
+  }
+  .facts dt { font-size: var(--text-sm); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+  .facts dd { margin: var(--space-1) 0 0; font-size: var(--text-lg); font-weight: 600; }
+
+  .story { display: grid; gap: var(--space-8); }
+  .story p { max-width: 38rem; }
+  .story p:last-child { margin-bottom: 0; }
+
+  .screens { display: grid; gap: var(--space-8); }
+  .shots { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-4); }
+  .shots--mobile { grid-template-columns: repeat(3, 1fr); }
+  .screens :global(.shot) {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow);
+  }
+
+  .metrics {
+    display: grid;
+    gap: var(--space-6);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+    margin: 0 0 var(--space-6);
+  }
+  /* Show the number above its label */
+  .metric { display: flex; flex-direction: column-reverse; }
+  .metric dd { margin: 0; font-size: var(--text-3xl); font-weight: 800; line-height: 1.1; color: var(--color-primary); }
+  .metric dt { margin-top: var(--space-2); font-weight: 600; }
+  .cs-quote { margin: 0; max-width: 48rem; }
+  .cs-quote blockquote { margin: 0 0 var(--space-4); font-size: var(--text-lg); }
+  .cs-quote blockquote p { margin: 0; }
+  .cs-quote blockquote p::before { content: '\201C'; }
+  .cs-quote blockquote p::after { content: '\201D'; }
+  .cs-quote figcaption { color: var(--color-muted); font-size: var(--text-sm); }
+
+  .cs-nav { --section: var(--space-8); border-top: 1px solid var(--color-border); }
+  .cs-nav__inner {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-4);
+  }
+
+  @media (min-width: 56rem) {
+    .story { grid-template-columns: 1fr 1fr; gap: var(--space-12); }
+    .screens { grid-template-columns: 2fr 1fr; align-items: start; }
+  }
+</style>

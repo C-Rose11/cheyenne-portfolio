@@ -1,0 +1,68 @@
+{
+  "title": "Client or project name",
+  "image": "../../assets/images/project-featured.svg",
+  "imageAlt": "Placeholder: screenshot of the featured project's home page",
+  "featured": true,
+  "result": "Placeholder: the result in one line, such as more sign-ups or sales.",
+  "stack": [
+    "Tool one",
+    "Tool two",
+    "Tool three"
+  ],
+  "type": "Project type",
+  "year": "2026",
+  "role": "Your role",
+  "url": "https://example.com",
+  "order": 0,
+  "client": "Client name",
+  "timeline": "Placeholder: length and dates",
+  "problem": [
+    "Placeholder: what the client needed and what was getting in their way. One or two short paragraphs."
+  ],
+  "approach": [
+    "Placeholder: how you tackled it, the key decisions you made, and why. One or two short paragraphs."
+  ],
+  "desktopScreens": [
+    {
+      "image": "../../assets/images/case-desktop.svg",
+      "alt": "Placeholder: desktop view of the home page"
+    },
+    {
+      "image": "../../assets/images/case-desktop.svg",
+      "alt": "Placeholder: desktop view of an inner page"
+    }
+  ],
+  "mobileScreens": [
+    {
+      "image": "../../assets/images/case-mobile.svg",
+      "alt": "Placeholder: mobile view of the home page"
+    },
+    {
+      "image": "../../assets/images/case-mobile.svg",
+      "alt": "Placeholder: mobile view of the menu"
+    },
+    {
+      "image": "../../assets/images/case-mobile.svg",
+      "alt": "Placeholder: mobile view of a form"
+    }
+  ],
+  "metrics": [
+    {
+      "value": "+00%",
+      "label": "Placeholder metric"
+    },
+    {
+      "value": "0.0s",
+      "label": "Placeholder metric"
+    },
+    {
+      "value": "00",
+      "label": "Placeholder metric"
+    }
+  ],
+  "testimonial": {
+    "quote": "Placeholder quote from the client about working together.",
+    "name": "Client first name",
+    "detail": "Role, company"
+  }
+}

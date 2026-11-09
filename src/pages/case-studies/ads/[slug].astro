@@ -1,0 +1,272 @@
+---
+import { getCollection, getEntry, type CollectionEntry } from 'astro:content';
+import { Image } from 'astro:assets';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+
+/** One page per Google Ads case study in src/content/ads/, at /case-studies/ads/<file name>/. */
+export async function getStaticPaths() {
+  const ads = (await getCollection('ads')).sort((a, b) => a.data.order - b.data.order);
+  // Previous and Next wrap around, so every case study links to two others.
+  return ads.map((ad, i) => ({
+    params: { slug: ad.id },
+    props: {
+      ad,
+      prev: ads.length > 1 ? ads[(i - 1 + ads.length) % ads.length] : undefined,
+      next: ads.length > 1 ? ads[(i + 1) % ads.length] : undefined,
+    },
+  }));
+}
+
+interface Props {
+  ad: CollectionEntry<'ads'>;
+  prev?: CollectionEntry<'ads'>;
+  next?: CollectionEntry<'ads'>;
+}
+
+const { ad, prev, next } = Astro.props;
+const a = ad.data;
+
+const page = await getEntry('pages', 'case-studies');
+const s = page?.data.sections ?? {};
+
+const facts = [
+  { label: s.industry ?? 'Industry', value: a.industry },
+  { label: s.campaignTypes ?? 'Campaign types', value: a.campaignTypes },
+  { label: s.monthlyBudget ?? 'Monthly budget', value: a.monthlyBudget },
+  { label: s.duration ?? 'Duration', value: a.duration },
+].filter((f) => f.value);
+
+const hasStory = a.challenge.length > 0 || a.strategy.length > 0;
+const hasProof = a.adExample || a.dashboard;
+const hasWrapUp = a.keyChanges.length > 0 || a.testimonial;
+---
+
+<BaseLayout title={`${a.client}: Google Ads case study`} description={`${a.headline}. ${a.result}${a.resultDetail ? `, ${a.resultDetail}` : ''}.`}>
+  <!-- Headline result -->
+  <section class="section theme-cream ad-hero">
+    <div class="container">
+      <p class="eyebrow"><a href="/case-studies/">{s.adsEyebrow ?? 'Google Ads case study'}</a> &middot; {a.client}</p>
+      <h1>{a.headline}</h1>
+      <p class="ad-hero__result"><strong>{a.result}</strong>{a.resultDetail && <span> {a.resultDetail}</span>}</p>
+    </div>
+  </section>
+
+  <!-- Industry, campaign types, budget, duration -->
+  {
+    facts.length > 0 && (
+      <section class="section theme-maroon cs-facts" aria-labelledby="facts-heading">
+        <div class="container">
+          <h2 id="facts-heading" class="visually-hidden">{s.detailsHeading ?? 'Project details'}</h2>
+          <dl class="facts">
+            {facts.map((f) => (
+              <div>
+                <dt>{f.label}</dt>
+                <dd>{f.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </section>
+    )
+  }
+
+  <!-- Before and after -->
+  {
+    a.metrics.length > 0 && (
+      <section class="section theme-cream" aria-labelledby="before-after-heading">
+        <div class="container">
+          <h2 id="before-after-heading">{s.beforeAfterHeading ?? 'Before and after'}</h2>
+          <dl class="before-after">
+            {a.metrics.map((m) => (
+              <div class="card">
+                <dt>{m.label}</dt>
+                <dd class="before-after__values">
+                  {m.before} <span aria-hidden="true">&rarr;</span><span class="visually-hidden"> to </span> {m.after}
+                </dd>
+                {m.change && <dd class="before-after__change">{m.change}</dd>}
+              </div>
+            ))}
+          </dl>
+        </div>
+      </section>
+    )
+  }
+
+  <!-- The challenge and the strategy -->
+  {
+    hasStory && (
+      <section class="section theme-cream story-section">
+        <div class="container story">
+          {a.challenge.length > 0 && (
+            <div>
+              <h2>{s.challengeHeading ?? 'The challenge'}</h2>
+              {a.challenge.map((para) => <p>{para}</p>)}
+            </div>
+          )}
+          {a.strategy.length > 0 && (
+            <div>
+              <h2>{s.strategyHeading ?? 'The strategy'}</h2>
+              {a.strategy.map((para) => <p>{para}</p>)}
+            </div>
+          )}
+        </div>
+      </section>
+    )
+  }
+
+  <!-- Performance chart -->
+  {
+    a.chart && (
+      <section class="section theme-green" aria-labelledby="chart-heading">
+        <div class="container">
+          <h2 id="chart-heading">{s.chartHeading ?? 'Performance over time'}</h2>
+          <Image src={a.chart.image} alt={a.chart.alt} widths={[640, 960, 1280]} sizes="(min-width: 72rem) 72rem, 100vw" class="ad-chart" />
+        </div>
+      </section>
+    )
+  }
+
+  <!-- Ad copy example and dashboard -->
+  {
+    hasProof && (
+      <section class="section theme-cream">
+        <div class="container proof">
+          {a.adExample && (
+            <div>
+              <h2>{s.adExampleHeading ?? 'Ad copy example (recreated)'}</h2>
+              <div class="card ad-preview">
+                <p class="ad-preview__url">
+                  <strong>{s.sponsored ?? 'Sponsored'}</strong> &middot; {a.adExample.displayUrl}
+                </p>
+                <p class="ad-preview__headline">{a.adExample.headlines.join(' | ')}</p>
+                <p class="ad-preview__desc">{a.adExample.description}</p>
+              </div>
+            </div>
+          )}
+          {a.dashboard && (
+            <div>
+              <h2>{s.dashboardHeading ?? 'Account dashboard'}</h2>
+              <Image src={a.dashboard.image} alt={a.dashboard.alt} widths={[480, 800, 1000]} sizes="(min-width: 56rem) 45vw, 100vw" class="ad-dashboard" />
+            </div>
+          )}
+        </div>
+      </section>
+    )
+  }
+
+  <!-- Key changes and testimonial -->
+  {
+    hasWrapUp && (
+      <section class="section theme-maroon">
+        <div class="container wrap-up">
+          {a.keyChanges.length > 0 && (
+            <div>
+              <h2>{s.keyChangesHeading ?? 'Key changes'}</h2>
+              <ul class="key-changes">
+                {a.keyChanges.map((c) => <li>{c}</li>)}
+              </ul>
+            </div>
+          )}
+          {a.testimonial && (
+            <figure class="card cs-quote">
+              <blockquote><p>{a.testimonial.quote}</p></blockquote>
+              <figcaption>
+                <strong>{a.testimonial.name}</strong>
+                {a.testimonial.detail && <span>, {a.testimonial.detail}</span>}
+              </figcaption>
+            </figure>
+          )}
+        </div>
+      </section>
+    )
+  }
+
+  <!-- Previous / audit / next -->
+  <nav class="section theme-cream cs-nav" aria-label="More Google Ads case studies">
+    <div class="container cs-nav__inner">
+      {prev ? (
+        <a class="btn btn--secondary" href={`/case-studies/ads/${prev.id}/`}>
+          <span aria-hidden="true">&larr;</span> {s.previous ?? 'Previous'}<span class="visually-hidden">: {prev.data.client}</span>
+        </a>
+      ) : <span />}
+      <a class="btn btn--primary" href="/#join">{s.auditButton ?? 'Book a free account audit'}</a>
+      {next ? (
+        <a class="btn btn--secondary" href={`/case-studies/ads/${next.id}/`}>
+          {s.next ?? 'Next'}<span class="visually-hidden">: {next.data.client}</span> <span aria-hidden="true">&rarr;</span>
+        </a>
+      ) : <span />}
+    </div>
+  </nav>
+</BaseLayout>
+
+<style>
+  .ad-hero { padding-bottom: var(--space-12); }
+  .ad-hero h1 { max-width: 48rem; margin-bottom: var(--space-4); }
+  .ad-hero__result { margin: 0; font-size: var(--text-lg); }
+  .ad-hero__result strong { color: var(--color-highlight); }
+  .eyebrow a { color: inherit; }
+
+  .cs-facts { --section: var(--space-12); }
+  .facts {
+    display: grid;
+    gap: var(--space-6);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+    margin: 0;
+  }
+  .facts dt { font-size: var(--text-sm); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+  .facts dd { margin: var(--space-1) 0 0; font-size: var(--text-lg); font-weight: 600; }
+
+  .before-after {
+    display: grid;
+    gap: var(--space-6);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+    margin: 0;
+  }
+  .before-after dt { font-weight: 600; }
+  .before-after dd { margin: 0; }
+  .before-after__values { margin-top: var(--space-1) !important; font-size: var(--text-xl); font-weight: 800; color: var(--color-primary); }
+  .before-after__change { margin-top: var(--space-1) !important; color: var(--color-highlight); font-weight: 700; }
+
+  .story-section { padding-top: 0; }
+  .story { display: grid; gap: var(--space-8); }
+  .story p { max-width: 38rem; }
+  .story p:last-child { margin-bottom: 0; }
+
+  :global(.ad-chart),
+  :global(.ad-dashboard) {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow);
+  }
+
+  .proof { display: grid; gap: var(--space-8); align-items: start; }
+  .proof h2 { font-size: var(--text-xl); }
+  .ad-preview p { margin: 0; }
+  .ad-preview__url { font-size: var(--text-sm); }
+  .ad-preview__headline { margin: var(--space-1) 0 !important; font-size: var(--text-lg); font-weight: 600; color: var(--color-primary); }
+
+  .wrap-up { display: grid; gap: var(--space-8); align-items: start; }
+  .key-changes { padding-left: 1.25rem; }
+  .key-changes li { margin-bottom: var(--space-2); }
+  .cs-quote { margin: 0; }
+  .cs-quote blockquote { margin: 0 0 var(--space-4); font-size: var(--text-lg); }
+  .cs-quote blockquote p { margin: 0; }
+  .cs-quote blockquote p::before { content: '\201C'; }
+  .cs-quote blockquote p::after { content: '\201D'; }
+  .cs-quote figcaption { color: var(--color-muted); font-size: var(--text-sm); }
+
+  .cs-nav { --section: var(--space-8); border-top: 1px solid var(--color-border); }
+  .cs-nav__inner {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-4);
+  }
+
+  @media (min-width: 56rem) {
+    .story, .proof, .wrap-up { grid-template-columns: 1fr 1fr; gap: var(--space-12); }
+  }
+</style>

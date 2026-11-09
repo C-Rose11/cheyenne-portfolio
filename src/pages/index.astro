@@ -4,7 +4,7 @@ import { Image } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import JoinForm from '../components/JoinForm.astro';
 import Icon from '../components/Icon.astro';
-import { site, absoluteUrl } from '../config/site';
+import { site } from '../config/site';
 
 const page = await getEntry('pages', 'home');
 if (!page) throw new Error('Missing content: src/content/pages/home.md');
@@ -14,77 +14,14 @@ const { Content: AboutText } = await render(page);
 const { meeting, features } = site;
 
 const byOrder = <T extends { data: { order: number } }>(a: T, b: T) => a.data.order - b.data.order;
-const schedule = (await getCollection('schedule')).sort(byOrder);
-const testimonials = (await getCollection('testimonials')).sort(byOrder);
-const faqs = (await getCollection('faqs')).sort(byOrder);
-const gallery = features.gallery ? (await getCollection('gallery')).sort(byOrder) : [];
-const sponsors = features.sponsors ? (await getCollection('sponsors')).sort(byOrder) : [];
-
-// Events dated before today are left out. Rebuild (push a change) to refresh after a date passes.
-const today = new Date();
-today.setUTCHours(0, 0, 0, 0);
-const events = features.events
-  ? (await getCollection('events'))
-      .filter((e) => e.data.date.valueOf() >= today.valueOf())
-      .sort((a, b) => a.data.date.valueOf() - b.data.date.valueOf())
-  : [];
-
-const month = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' });
-const day = (d: Date) => d.toLocaleDateString('en-US', { day: 'numeric', timeZone: 'UTC' });
-const longDate = (d: Date) =>
-  d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
-const isoDay = (d: Date) => d.toISOString().slice(0, 10);
-
-const meetingAddress = {
-  '@type': 'PostalAddress',
-  streetAddress: meeting.street,
-  addressLocality: meeting.city,
-  addressRegion: meeting.region,
-  postalCode: meeting.postalCode,
-  addressCountry: meeting.country,
-};
-
-// Structured data: Event entries for the upcoming events, FAQPage for the questions.
-const eventSchema = events.map((e) => ({
-  '@context': 'https://schema.org',
-  '@type': 'Event',
-  name: e.data.title,
-  startDate: isoDay(e.data.date),
-  eventStatus: 'https://schema.org/EventScheduled',
-  eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-  location: { '@type': 'Place', name: e.data.location ?? meeting.name, address: meetingAddress },
-  image: absoluteUrl(site.shareImage),
-  organizer: { '@type': 'Organization', name: site.name, url: absoluteUrl('/') },
-  ...(e.data.description && { description: e.data.description }),
-  ...(e.data.link && { url: e.data.link }),
-}));
-
-const plain = (md = '') =>
-  md
-    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
-    .replace(/[*_`>#]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-
-const faqSchema = {
-  '@context': 'https://schema.org',
-  '@type': 'FAQPage',
-  mainEntity: faqs.map((faq) => ({
-    '@type': 'Question',
-    name: faq.data.question,
-    acceptedAnswer: { '@type': 'Answer', text: plain(faq.body) },
-  })),
-};
-
-const faqRendered = await Promise.all(faqs.map(async (faq) => ({ faq, Content: (await render(faq)).Content })));
+const projects = features.work ? (await getCollection('projects')).sort(byOrder) : [];
+const featured = projects.find((p) => p.data.featured);
+const projectCards = projects.filter((p) => p !== featured);
+const projectMeta = (p: (typeof projects)[number]) => [p.data.type, p.data.year, p.data.role].filter(Boolean).join(' · ');
+const ads = features.ads ? (await getCollection('ads')).sort(byOrder) : [];
 ---
 
 <BaseLayout title={data.title} description={data.description} isHome>
-  <Fragment slot="head">
-    {events.length > 0 && <script type="application/ld+json" set:html={JSON.stringify(eventSchema)} />}
-    {faqs.length > 0 && <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />}
-  </Fragment>
-
   <!-- Hero -->
   <section class="hero theme-cream" class:list={{ 'hero--image': data.heroImage }} style={data.heroImage ? `--hero-wash:${data.heroOverlay}` : undefined}>
     {
@@ -101,115 +38,73 @@ const faqRendered = await Promise.all(faqs.map(async (faq) => ({ faq, Content: (
       )
     }
     <div class="container hero__inner">
+      <div class="hero__text">
       <p class="eyebrow">{site.name}</p>
       <h1>{data.heading}</h1>
       {data.intro && <p class="lead hero__sub">{data.intro}</p>}
       <div class="btn-row">
-        <a class="btn btn--primary" href="#join">{s.heroPrimary ?? 'Join the club'}</a>
-        <a class="btn btn--secondary" href="#schedule">{s.heroSecondary ?? 'See the schedule'}</a>
+        <a class="btn btn--primary" href="#join">{s.heroPrimary ?? 'Start a conversation'}</a>
+        <a class="btn btn--secondary" href="#work">{s.heroSecondary ?? 'See my work'}</a>
       </div>
       <p class="hero__area">
         <Icon name="pin" size={18} />
-        <span>Meets at {meeting.name}, {meeting.city}</span>
+        <span>{s.heroLocation ?? `${meeting.name}, ${meeting.city}`}</span>
       </p>
-    </div>
-  </section>
-
-  <!-- About -->
-  <section class="section theme-green" id="about" aria-labelledby="about-heading">
-    <div class="container about">
-      <div class="about__text">
-        <h2 id="about-heading">{s.aboutHeading}</h2>
-        <div class="prose"><AboutText /></div>
       </div>
-      {
-        data.image && (
-          <Image src={data.image} alt={data.imageAlt ?? ''} widths={[480, 800]} sizes="(min-width: 56rem) 40vw, 100vw" class="about__img" />
-        )
-      }
-    </div>
-  </section>
-
-  <!-- Benefits -->
-  {
-    data.benefits && (
-      <section class="section theme-cream" aria-labelledby="benefits-heading">
-        <div class="container">
-          <div class="section__head"><h2 id="benefits-heading">{s.benefitsHeading}</h2></div>
-          <ul class="grid cards">
-            {data.benefits.map((b) => (
-              <li class="card">
-                <div class="card__icon"><Icon name={b.icon} /></div>
-                <h3>{b.title}</h3>
-                <p>{b.text}</p>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-    )
-  }
-
-  <!-- Schedule -->
-  <section class="section theme-maroon" id="schedule" aria-labelledby="schedule-heading">
-    <div class="container">
-      <div class="section__head">
-        <h2 id="schedule-heading">{s.scheduleHeading}</h2>
-        {s.scheduleIntro && <p class="lead">{s.scheduleIntro}</p>}
+      <!-- Green frame: shows heroPhoto from home.md, or stays empty until one is added -->
+      <div class="hero__frame">
+        {data.heroPhoto ? (
+          <Image src={data.heroPhoto} alt={data.heroPhotoAlt} widths={[360, 540, 720, 1080]} sizes="(min-width: 56rem) 30vw, 90vw" loading="eager" class="hero__photo" />
+        ) : (
+          <div class="hero__photo hero__photo--empty" aria-hidden="true" />
+        )}
       </div>
-      <ul class="grid cards">
-        {
-          schedule.map((run) => (
-            <li class="card run">
-              <p class="run__when">
-                <Icon name="calendar" size={18} />
-                <span>{run.data.day}s &middot; {run.data.time}</span>
-              </p>
-              <h3>{run.data.title}</h3>
-              <p class="run__meta">
-                <Icon name="pin" size={16} />
-                <span>{run.data.location ?? meeting.name}</span>
-              </p>
-              {run.data.pace && <p class="run__meta"><Icon name="clock" size={16} /><span>{run.data.pace}</span></p>}
-              {run.data.description && <p>{run.data.description}</p>}
-            </li>
-          ))
-        }
-      </ul>
     </div>
   </section>
 
-  <!-- Events -->
+  <!-- Selected work -->
   {
-    features.events && (
-      <section class="section theme-cream" id="events" aria-labelledby="events-heading">
+    features.work && projects.length > 0 && (
+      <section class="section theme-maroon" id="work" aria-labelledby="work-heading">
         <div class="container">
           <div class="section__head">
-            <h2 id="events-heading">{s.eventsHeading}</h2>
-            {s.eventsIntro && <p class="lead">{s.eventsIntro}</p>}
+            <h2 id="work-heading">{s.workHeading ?? 'Websites'}</h2>
+            {s.workIntro && <p class="lead">{s.workIntro}</p>}
           </div>
-          {events.length === 0 ? (
-            <p>{s.eventsEmpty ?? 'No events are scheduled right now.'}</p>
-          ) : (
-            <ul class="events">
-              {events.map((e) => (
-                <li class="card event">
-                  <div class="event__date" aria-hidden="true">
-                    <span class="event__month">{month(e.data.date)}</span>
-                    <span class="event__day">{day(e.data.date)}</span>
-                  </div>
-                  <div class="event__body">
-                    <h3>{e.data.title}</h3>
-                    <p class="event__meta">
-                      <time datetime={isoDay(e.data.date)}>{longDate(e.data.date)}</time>
-                      {e.data.time && <span> &middot; {e.data.time}</span>}
-                      {e.data.location && <span> &middot; {e.data.location}</span>}
-                    </p>
-                    {e.data.description && <p>{e.data.description}</p>}
-                    {e.data.link && (
-                      <p><a href={e.data.link} rel="noopener noreferrer" target="_blank">{s.eventsLink ?? 'Event details'}<span class="visually-hidden"> for {e.data.title} (opens in a new tab)</span></a></p>
-                    )}
-                  </div>
+
+          {featured && (
+            <article class="card project-featured">
+              <Image src={featured.data.image} alt={featured.data.imageAlt} widths={[600, 900, 1200]} sizes="(min-width: 56rem) 55vw, 100vw" class="project__img" />
+              <div class="project-featured__body">
+                <p class="badge">{s.workFeatured ?? 'Featured'}</p>
+                <h3>{featured.data.title}</h3>
+                {featured.data.result && <p class="project-featured__result">{featured.data.result}</p>}
+                {featured.data.stack.length > 0 && <p class="project__meta">{featured.data.stack.join(' · ')}</p>}
+                <div class="project-featured__actions">
+                  <a class="btn btn--primary" href={`/case-studies/${featured.id}/`}>
+                    {s.workCaseStudy ?? 'Case study'}<span class="visually-hidden">: {featured.data.title}</span>
+                  </a>
+                  {featured.data.url && (
+                    <a class="btn btn--secondary" href={featured.data.url} rel="noopener noreferrer" target="_blank">
+                      {s.workLiveSite ?? 'Live site'}
+                      <Icon name="external" size={18} />
+                      <span class="visually-hidden"> for {featured.data.title} (opens in a new tab)</span>
+                    </a>
+                  )}
+                </div>
+              </div>
+            </article>
+          )}
+
+          {projectCards.length > 0 && (
+            <ul class="projects">
+              {projectCards.map((p) => (
+                <li class="card project">
+                  <Image src={p.data.image} alt={p.data.imageAlt} widths={[400, 800]} sizes="(min-width: 56rem) 30vw, (min-width: 36rem) 50vw, 100vw" class="project__img" />
+                  <h3>
+                    <a href={`/case-studies/${p.id}/`}>{p.data.title}</a>
+                  </h3>
+                  {projectMeta(p) && <p class="project__meta">{projectMeta(p)}</p>}
                 </li>
               ))}
             </ul>
@@ -219,19 +114,36 @@ const faqRendered = await Promise.all(faqs.map(async (faq) => ({ faq, Content: (
     )
   }
 
-  <!-- Gallery -->
+  <!-- Paid search results -->
   {
-    features.gallery && gallery.length > 0 && (
-      <section class="section theme-green" id="gallery" aria-labelledby="gallery-heading">
+    features.ads && ads.length > 0 && (
+      <section class="section theme-cream" id="ads" aria-labelledby="ads-heading">
         <div class="container">
           <div class="section__head">
-            <h2 id="gallery-heading">{s.galleryHeading}</h2>
-            {s.galleryIntro && <p class="lead">{s.galleryIntro}</p>}
+            <h2 id="ads-heading">{s.adsHeading ?? 'Paid search results'}</h2>
+            {s.adsIntro && <p class="lead">{s.adsIntro}</p>}
           </div>
-          <ul class="gallery">
-            {gallery.map((g) => (
-              <li>
-                <Image src={g.data.image} alt={g.data.alt} widths={[400, 640, 960]} sizes="(min-width: 56rem) 33vw, (min-width: 32rem) 50vw, 100vw" class="gallery__img" />
+          {data.adsStats && data.adsStats.length > 0 && (
+            <dl class="ad-stats">
+              {data.adsStats.map((stat) => (
+                <div>
+                  <dt>{stat.label}</dt>
+                  <dd>{stat.value}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+          <ul class="ad-cards">
+            {ads.map((a) => (
+              <li class="card ad-card">
+                <p class="ad-card__tag">{a.data.industry} &middot; {a.data.campaignTypes}</p>
+                <h3>{a.data.client}</h3>
+                <p class="ad-card__result">{a.data.result}</p>
+                {a.data.resultDetail && <p class="ad-card__detail">{a.data.resultDetail}</p>}
+                <span class="ad-card__spacer" aria-hidden="true" />
+                <a class="btn btn--secondary" href={`/case-studies/ads/${a.id}/`}>
+                  {s.adsCaseStudy ?? 'Case study'}<span class="visually-hidden">: {a.data.client}</span> <span aria-hidden="true">&rarr;</span>
+                </a>
               </li>
             ))}
           </ul>
@@ -240,73 +152,27 @@ const faqRendered = await Promise.all(faqs.map(async (faq) => ({ faq, Content: (
     )
   }
 
-  <!-- Member stories -->
-  {
-    testimonials.length > 0 && (
-      <section class="section theme-cream" aria-labelledby="stories-heading">
-        <div class="container">
-          <div class="section__head"><h2 id="stories-heading">{s.storiesHeading}</h2></div>
-          <div class="grid">
-            {testimonials.map((t) => (
-              <figure class="card quote">
-                <blockquote><p>{t.data.quote}</p></blockquote>
-                <figcaption>
-                  <strong>{t.data.firstName}</strong>
-                  {t.data.detail && <span>, {t.data.detail}</span>}
-                </figcaption>
-              </figure>
-            ))}
-          </div>
+  <!-- About -->
+  <section class="section theme-green" id="about" aria-labelledby="about-heading">
+    <div class="container about" class:list={{ 'about--photo': data.image }}>
+      <!-- Decorative maroon star stickers. Phones: a cluster above the heading (stars--top) and one below the text.
+           Wider screens: the clusters sit in side margins beside the first and last lines (stars--side, stars--bottom). -->
+      <div class="stars stars--top" aria-hidden="true"><svg class="star star--big" viewBox="0 0 100 100"><path d="M50 0C54 36 64 46 100 50C64 54 54 64 50 100C46 64 36 54 0 50C36 46 46 36 50 0Z" /></svg><svg class="star star--sm1" viewBox="0 0 100 100"><path d="M50 0C54 36 64 46 100 50C64 54 54 64 50 100C46 64 36 54 0 50C36 46 46 36 50 0Z" /></svg><svg class="star star--sm2" viewBox="0 0 100 100"><path d="M50 0C54 36 64 46 100 50C64 54 54 64 50 100C46 64 36 54 0 50C36 46 46 36 50 0Z" /></svg></div>
+      <div class="about__text">
+        <h2 id="about-heading">{s.aboutHeading}</h2>
+        <div class="about__body">
+          <div class="stars stars--side" aria-hidden="true"><svg class="star star--big" viewBox="0 0 100 100"><path d="M50 0C54 36 64 46 100 50C64 54 54 64 50 100C46 64 36 54 0 50C36 46 46 36 50 0Z" /></svg><svg class="star star--sm1" viewBox="0 0 100 100"><path d="M50 0C54 36 64 46 100 50C64 54 54 64 50 100C46 64 36 54 0 50C36 46 46 36 50 0Z" /></svg><svg class="star star--sm2" viewBox="0 0 100 100"><path d="M50 0C54 36 64 46 100 50C64 54 54 64 50 100C46 64 36 54 0 50C36 46 46 36 50 0Z" /></svg></div>
+          <div class="prose"><AboutText /></div>
         </div>
-      </section>
-    )
-  }
-
-  <!-- FAQ -->
-  <section class="section theme-cream" id="faq" aria-labelledby="faq-heading">
-    <div class="container faq-wrap">
-      <div class="section__head">
-        <h2 id="faq-heading">{s.faqHeading}</h2>
-        {s.faqIntro && <p class="lead">{s.faqIntro}</p>}
       </div>
+      <div class="stars stars--bottom" aria-hidden="true"><svg class="star star--big" viewBox="0 0 100 100"><path d="M50 0C54 36 64 46 100 50C64 54 54 64 50 100C46 64 36 54 0 50C36 46 46 36 50 0Z" /></svg><svg class="star star--sm1" viewBox="0 0 100 100"><path d="M50 0C54 36 64 46 100 50C64 54 54 64 50 100C46 64 36 54 0 50C36 46 46 36 50 0Z" /></svg><svg class="star star--sm2" viewBox="0 0 100 100"><path d="M50 0C54 36 64 46 100 50C64 54 54 64 50 100C46 64 36 54 0 50C36 46 46 36 50 0Z" /></svg></div>
       {
-        faqRendered.map(({ faq, Content }) => (
-          <details>
-            <summary>{faq.data.question}</summary>
-            <div class="answer prose"><Content /></div>
-          </details>
-        ))
+        data.image && (
+          <Image src={data.image} alt={data.imageAlt ?? ''} widths={[480, 800]} sizes="(min-width: 56rem) 40vw, 100vw" class="about__img" />
+        )
       }
     </div>
   </section>
-
-  <!-- Sponsors -->
-  {
-    features.sponsors && sponsors.length > 0 && (
-      <section class="section theme-maroon sponsors-section" aria-labelledby="sponsors-heading" style="--section: 3rem">
-        <div class="container">
-          <div class="section__head section__head--center">
-            <h2 id="sponsors-heading">{s.sponsorsHeading}</h2>
-            {s.sponsorsIntro && <p class="lead">{s.sponsorsIntro}</p>}
-          </div>
-          <ul class="sponsors">
-            {sponsors.map((sp) => (
-              <li>
-                {sp.data.url ? (
-                  <a href={sp.data.url} rel="noopener noreferrer sponsored" target="_blank">
-                    <Image src={sp.data.logo} alt={sp.data.name} width={200} height={100} class="sponsor__img" />
-                    <span class="visually-hidden"> (opens in a new tab)</span>
-                  </a>
-                ) : (
-                  <Image src={sp.data.logo} alt={sp.data.name} width={200} height={100} class="sponsor__img" />
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-    )
-  }
 
   <!-- Join -->
   <section class="section join theme-cream" id="join" aria-labelledby="join-heading">
@@ -386,7 +252,29 @@ const faqRendered = await Promise.all(faqs.map(async (faq) => ({ faq, Content: (
       );
     }
   }
-  .hero__inner > * { max-width: 44rem; }
+  .hero__inner { display: grid; gap: var(--space-12); align-items: center; }
+  .hero__text { max-width: 44rem; }
+  .hero__frame {
+    width: min(100%, 26rem);
+    padding: var(--space-3);
+    border-radius: var(--radius);
+    background: var(--color-highlight);
+    box-shadow: var(--shadow);
+  }
+  .hero :global(.hero__photo) {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+  }
+  /* Empty frame: a soft inner panel until a photo is added */
+  .hero__photo--empty { border: 2px dashed color-mix(in srgb, var(--color-background) 55%, transparent); }
+  @media (min-width: 56rem) {
+    .hero__inner { grid-template-columns: 1fr minmax(16rem, 24rem); }
+    .hero__frame { justify-self: end; }
+  }
   .hero__sub { margin-bottom: var(--space-6); }
   .hero__area {
     display: flex;
@@ -399,115 +287,116 @@ const faqRendered = await Promise.all(faqs.map(async (faq) => ({ faq, Content: (
 
   /* About */
   .about { display: grid; gap: var(--space-8); align-items: center; }
+  /* Star stickers: decorative. Top cluster sits in the corner beside the heading;
+     the bottom cluster is the same group turned 180 degrees, placed below the text. */
+  .about { position: relative; --star-size: clamp(2.25rem, 1.25rem + 3vw, 4.25rem); }
+  .stars {
+    position: relative;
+    width: calc(var(--star-size) * 1.9);
+    height: calc(var(--star-size) * 1.45);
+    pointer-events: none;
+  }
+  .stars--top { position: absolute; top: calc(-1 * var(--star-size) * 0.85); right: 0; }
+  .about__body { position: relative; }
+  .stars--side { display: none; }
+  /* Pulled up against the last paragraph so it hugs the text's bottom-left corner */
+  .stars--bottom { rotate: 180deg; margin-top: calc(-1 * var(--space-8) + var(--space-2)); }
+  /* Wider screens: indent the text to make a left margin, and tuck the bottom cluster
+     into that margin beside the last paragraph's bottom-left corner */
+  @media (min-width: 56rem) {
+    .about:not(.about--photo) .about__text { padding-inline: calc(var(--star-size) * 1.75); }
+    /* Right margin cluster: the first line of the first paragraph sits between its two small stars */
+    .about:not(.about--photo) .stars--top { display: none; }
+    .about:not(.about--photo) .stars--side { display: block; position: absolute; right: calc(var(--star-size) * -1.75); top: calc(0.85rem - var(--star-size) * 0.7); }
+    /* Lowered so the last line of text (it starts with "automatically" on a typical
+       desktop width) sits in the gap between the two small stars */
+    .about:not(.about--photo) .stars--bottom { position: absolute; left: 0; bottom: calc(var(--star-size) * -0.7 + 0.85rem); margin: 0; }
+  }
+  .star { position: absolute; height: auto; fill: var(--color-primary); }
+  .star--big { width: var(--star-size); right: 0; top: calc(var(--star-size) * 0.3); rotate: 12deg; }
+  .star--sm1 { width: calc(var(--star-size) * 0.45); right: calc(var(--star-size) * 1.1); top: 0; rotate: -10deg; }
+  .star--sm2 { width: calc(var(--star-size) * 0.3); right: calc(var(--star-size) * 1); top: calc(var(--star-size) * 0.95); rotate: 15deg; }
   .about :global(.about__img) { width: 100%; border-radius: var(--radius); box-shadow: var(--shadow); }
   @media (min-width: 56rem) {
-    .about { grid-template-columns: 1.1fr 1fr; gap: var(--space-12); }
+    .about--photo { grid-template-columns: 1.1fr 1fr; gap: var(--space-12); }
   }
 
   .cards { list-style: none; margin: 0; padding: 0; }
 
-  /* Schedule */
-  .run__when {
-    display: flex;
+  /* Selected work */
+  .project-featured {
+    display: grid;
+    gap: var(--space-6);
     align-items: center;
-    gap: var(--space-2);
-    margin: 0 0 var(--space-2);
-    color: var(--color-accent-dark);
+    margin-bottom: var(--space-6);
+  }
+  .project-featured h3 { font-size: var(--text-xl); margin-bottom: var(--space-2); }
+  .project-featured__result { font-size: var(--text-lg); margin-bottom: var(--space-3); }
+  .project-featured__actions { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-2); }
+  .badge {
+    display: inline-block;
+    margin: 0 0 var(--space-3);
+    padding: 0.2rem 0.75rem;
+    border-radius: 999px;
+    background: var(--color-highlight);
+    color: var(--color-background);
+    font-size: var(--text-sm);
     font-weight: 700;
   }
-  .run__meta { display: flex; align-items: center; gap: var(--space-2); margin: 0 0 var(--space-2); color: var(--color-muted); font-size: var(--text-sm); font-weight: 600; }
-  .run :global(svg), .hero__area :global(svg) { flex: none; color: var(--sec-accent); }
-
-  /* Events */
-  .events { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-4); max-width: 52rem; }
-  .event { display: flex; gap: var(--space-6); align-items: flex-start; }
-  .event__date {
-    flex: none;
-    display: grid;
-    place-items: center;
-    width: 4.25rem;
-    padding: var(--space-2) 0;
-    border-radius: var(--radius-sm);
-    background: var(--color-primary);
-    color: var(--color-background);
-    line-height: 1.1;
-    text-align: center;
-  }
-  .event__month { font-size: var(--text-sm); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
-  .event__day { font-size: 1.6rem; font-weight: 800; }
-  .event__body h3 { margin-bottom: var(--space-1); }
-  .event__meta { color: var(--color-muted); font-size: var(--text-sm); font-weight: 600; }
-
-  /* Gallery */
-  .gallery {
+  .project__meta { color: var(--color-muted); font-size: var(--text-sm); font-weight: 600; }
+  .projects {
     list-style: none;
     margin: 0;
     padding: 0;
     display: grid;
-    gap: var(--space-3);
-    grid-template-columns: 1fr;
+    gap: var(--space-6);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
   }
-  @media (min-width: 32rem) {
-    .gallery { grid-template-columns: repeat(2, 1fr); }
-  }
-  @media (min-width: 56rem) {
-    .gallery { grid-template-columns: repeat(3, 1fr); }
-  }
-  .gallery :global(.gallery__img) {
+  .project h3 { margin: var(--space-4) 0 var(--space-1); }
+  /* The whole card is clickable through the heading link */
+  .project { position: relative; }
+  .project h3 a { text-decoration: none; }
+  .project h3 a::after { content: ''; position: absolute; inset: 0; border-radius: var(--radius); }
+  .project:hover h3 a { text-decoration: underline; }
+  .project__meta:last-child { margin-bottom: 0; }
+  :global(.project__img) {
+    display: block;
     width: 100%;
     height: auto;
-    aspect-ratio: 3 / 2;
+    aspect-ratio: 8 / 5;
     object-fit: cover;
     border-radius: var(--radius-sm);
-    box-shadow: var(--shadow);
+  }
+  @media (min-width: 56rem) {
+    .project-featured { grid-template-columns: 1.4fr 1fr; gap: var(--space-8); }
   }
 
-  /* Member stories */
-  .quote { margin: 0; }
-  .quote blockquote { margin: 0 0 var(--space-4); font-size: var(--text-lg); }
-  .quote blockquote p::before { content: '\201C'; }
-  .quote blockquote p::after { content: '\201D'; }
-  .quote figcaption { color: var(--color-muted); font-size: var(--text-sm); }
-
-  /* FAQ */
-  .faq-wrap { max-width: 48rem; }
-  details {
-    border: 1px solid var(--color-primary);
-    border-radius: var(--radius-sm);
-    background: var(--color-background);
+  /* Paid search results */
+  .ad-stats {
+    display: grid;
+    gap: var(--space-6);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+    margin: 0 0 var(--space-8);
   }
-  details + details { margin-top: var(--space-3); }
-  summary {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: var(--space-4);
-    padding: var(--space-4) var(--space-6);
-    font-weight: 650;
-    color: var(--color-primary);
-    cursor: pointer;
-    list-style: none;
-  }
-  summary::-webkit-details-marker { display: none; }
-  summary::after { content: '+'; flex: none; font-size: 1.5rem; line-height: 1; color: var(--sec-accent); }
-  details[open] summary::after { content: '\2212'; }
-  summary:focus-visible { outline-offset: -3px; }
-  .answer { padding: 0 var(--space-6) var(--space-4); }
-
-  /* Sponsors */
-  .sponsors-section .section__head { margin-bottom: var(--space-6); }
-  .sponsors {
+  /* Show the number above its label */
+  .ad-stats div { display: flex; flex-direction: column-reverse; }
+  .ad-stats dd { margin: 0; font-size: var(--text-2xl); font-weight: 800; line-height: 1.1; }
+  .ad-stats dt { margin-top: var(--space-1); }
+  .ad-cards {
     list-style: none;
     margin: 0;
     padding: 0;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: center;
-    gap: var(--space-4);
+    display: grid;
+    gap: var(--space-6);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
   }
-  .sponsors a { display: block; border-radius: var(--radius-sm); }
-  .sponsors :global(.sponsor__img) { width: 9rem; height: auto; border-radius: var(--radius-sm); }
+  .ad-card { display: flex; flex-direction: column; align-items: flex-start; }
+  .ad-card__tag { margin: 0 0 var(--space-1); color: var(--color-muted); font-size: var(--text-sm); font-weight: 600; }
+  .ad-card h3 { margin-bottom: var(--space-4); }
+  .ad-card__result { margin: 0; font-size: var(--text-2xl); font-weight: 800; line-height: 1.15; color: var(--color-primary); }
+  .ad-card__detail { margin: var(--space-1) 0 0; }
+  /* Push the button to the bottom so buttons line up across cards */
+  .ad-card__spacer { flex: 1; min-height: var(--space-4); }
 
   /* Join */
   .join__inner { display: grid; gap: var(--space-12); }

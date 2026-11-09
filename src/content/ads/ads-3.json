@@ -1,0 +1,70 @@
+{
+  "client": "Client or industry name 3",
+  "headline": "Placeholder headline result 3: what changed, for what kind of business",
+  "industry": "SaaS",
+  "campaignTypes": "Search + Performance Max",
+  "monthlyBudget": "$X per month",
+  "duration": "X months",
+  "result": "X.Xx ROAS",
+  "resultDetail": "up from Y.Yx",
+  "metrics": [
+    {
+      "label": "CTR",
+      "before": "X%",
+      "after": "Y%",
+      "change": "+X%"
+    },
+    {
+      "label": "CPC",
+      "before": "$X",
+      "after": "$Y",
+      "change": "-X%"
+    },
+    {
+      "label": "Conv. rate",
+      "before": "X%",
+      "after": "Y%",
+      "change": "+X%"
+    },
+    {
+      "label": "CPA",
+      "before": "$X",
+      "after": "$Y",
+      "change": "-X%"
+    }
+  ],
+  "challenge": [
+    "Placeholder: what was wrong with the account when you took it over."
+  ],
+  "strategy": [
+    "Placeholder: what you changed in structure, bidding, keywords and audiences, and why."
+  ],
+  "chart": {
+    "image": "../../assets/images/ads-chart.svg",
+    "alt": "Placeholder chart: conversions rising while cost stays flat, with two key changes marked"
+  },
+  "adExample": {
+    "displayUrl": "example.com",
+    "headlines": [
+      "Headline 1",
+      "Headline 2",
+      "Headline 3"
+    ],
+    "description": "Placeholder description line with the offer and a call to action."
+  },
+  "dashboard": {
+    "image": "../../assets/images/ads-dashboard.svg",
+    "alt": "Placeholder: Google Ads dashboard with client names blurred"
+  },
+  "keyChanges": [
+    "Placeholder: key change one",
+    "Placeholder: key change two",
+    "Placeholder: key change three"
+  ],
+  "testimonial": {
+    "quote": "Placeholder quote from the client about the results.",
+    "name": "Client first name",
+    "detail": "Role, company"
+  },
+  "order": 3
+}

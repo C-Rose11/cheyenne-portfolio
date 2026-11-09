@@ -4,7 +4,7 @@ import { getEntry } from 'astro:content';
 import { site } from '../config/site';
 
 const home = await getEntry('pages', 'home');
-const buttonLabel = home?.data.sections?.headerButton ?? 'Join us';
+const buttonLabel = home?.data.sections?.headerButton ?? 'Contact';
 ---
 
 <header class="site-header theme-maroon">
@@ -28,7 +28,7 @@ const buttonLabel = home?.data.sections?.headerButton ?? 'Join us';
 
     <nav id="site-nav" class="site-nav" aria-label="Main">
       <ul>
-        {site.nav.map((item) => <li><a href={item.href}>{item.label}</a></li>)}
+        {site.nav.map((item) => <li><a href={item.href} aria-current={!item.href.includes('#') && Astro.url.pathname.startsWith(item.href) ? 'page' : undefined}>{item.label}</a></li>)}
       </ul>
     </nav>
   </div>
@@ -82,7 +82,7 @@ const buttonLabel = home?.data.sections?.headerButton ?? 'Join us';
     align-items: center;
     gap: var(--space-3);
     min-height: var(--header-h);
-    padding-block: var(--space-3);
+    padding-block: var(--space-4);
   }
   /* Pink tile behind the logo so a dark logo stays visible on maroon (matches the footer) */
   .brand {
@@ -93,7 +93,7 @@ const buttonLabel = home?.data.sections?.headerButton ?? 'Join us';
     border-radius: var(--radius-sm);
     line-height: 0;
   }
-  .brand :global(img) { height: 2.25rem; width: auto; }
+  .brand :global(img) { height: 2.5rem; width: auto; }
   .join-btn { padding-inline: 1.1rem; white-space: nowrap; }
 
   .menu-toggle {
@@ -128,6 +128,7 @@ const buttonLabel = home?.data.sections?.headerButton ?? 'Join us';
     font-weight: 600;
     text-decoration: none;
   }
+  .site-nav a[aria-current='page'] { text-decoration: underline; text-underline-offset: 0.25em; }
   .site-nav a:hover { text-decoration: underline; text-underline-offset: 0.25em; }
 
   /* Collapsed state only applies when JS is running */

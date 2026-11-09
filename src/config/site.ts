@@ -20,12 +20,14 @@ export interface JoinLink {
  */
 const features = {
   events: true,
+  work: true,
+  ads: true,
   gallery: true,
   sponsors: true,
 };
 
 export const site = {
-  name: 'Example Run Club',
+  name: 'MS Digital Marketing',
   tagline: 'Everyone runs. Everyone belongs.',
 
   /** schema.org type for the JSON-LD, e.g. "SportsClub", "Organization", "NGO" */
@@ -69,12 +71,10 @@ export const site = {
 
   /** Header links jump to sections on the page. Labels and order are editable. */
   nav: [
+    ...(features.work ? [{ label: 'Websites', href: '/#work' }] : []),
+    ...(features.ads ? [{ label: 'Google Ads', href: '/#ads' }] : []),
     { label: 'About', href: '/#about' },
-    { label: 'Schedule', href: '/#schedule' },
-    ...(features.events ? [{ label: 'Events', href: '/#events' }] : []),
-    ...(features.gallery ? [{ label: 'Photos', href: '/#gallery' }] : []),
-    { label: 'FAQ', href: '/#faq' },
-    { label: 'Join', href: '/#join' },
+    ...(features.work || features.ads ? [{ label: 'Case studies', href: '/case-studies/' }] : []),
   ],
 
   /**
@@ -86,7 +86,7 @@ export const site = {
   /** Production URL, no trailing slash. Drives canonical URLs, the sitemap and structured data. */
   url: 'https://example.com',
   description:
-    'Example Run Club is a friendly, welcoming running group in Sampletown. All paces and experience levels are welcome. Come run with us.',
+    'MS Digital Marketing: website development and Google Ads strategy by Cheyenne Rosenboro.',
   /** Lives in /public. 1200x630 recommended. */
   shareImage: '/og-default.png',
 
